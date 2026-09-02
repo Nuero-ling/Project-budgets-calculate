@@ -651,9 +651,9 @@ table.tbl .center { text-align: center; }
     <div class="topbar-right">
       <span class="meta-chip">项目：<strong id="topbarProjectName">DEMO-2026</strong></span>
       <span class="meta-chip">项目级别：<strong id="topbarProjectLevel">A</strong></span>
-      <span class="meta-chip">数据源：<strong>归一化测试基线</strong></span>
+      <span class="meta-chip">项目负责人：<strong id="topbarProjectLeader">演示用户</strong></span>
       <span class="meta-chip">费用模式：<strong id="topbarCostMode">内部项目</strong></span>
-      <button class="btn primary" onclick="exportReport()">导出报表</button>
+      <button class="btn primary" onclick="exportProjectConfig()">保存配置</button>
     </div>
   </header>
   <div class="content">
@@ -827,13 +827,13 @@ table.tbl .center { text-align: center; }
       </div>
       <div class="card">
         <div class="card-header">
-          <h3>样车配置表导出</h3>
-          <span class="chip blue">样车清单</span>
+          <h3>样车配置表及样车需求表导出</h3>
+          <span class="chip blue">样车清单 + 需求矩阵</span>
         </div>
         <div class="card-body">
-          <p class="small muted">按样车调整后的结果，输出每台样车一行：序号、项目设置中各系统项、试验项目、样车类型（新车/借用）、配置名称、基础车型标识。试验项目来自样车调整表格纵轴的全部项目，后续新增试验项目会自动包含。</p>
+          <p class="small muted">导出两个 Sheet：① 样车需求表（每台样车一行：序号、各系统项、试验项目、样车类型、配置名称等）；② 样车配置表（完全等于样车调整页中的配置矩阵与试验项目表格，横轴为配置，纵轴为基础车型/测试基线/各系统/全部试验项目/合计）。</p>
           <div class="spacer"></div>
-          <button class="btn primary" onclick="exportSampleCarConfigTable()">导出样车配置表 (.xlsx)</button>
+          <button class="btn primary" onclick="exportSampleCarConfigTable()">导出样车配置表及样车需求表 (.xlsx)</button>
         </div>
       </div>
     </section>
@@ -850,6 +850,7 @@ table.tbl .center { text-align: center; }
             <div class="small muted">项目级别</div>
             <div class="segmented" role="radiogroup" aria-label="项目级别">
               <input type="radio" name="lvl" id="la" onchange="updateProjectInfo()"><label for="la">A</label>
+              <input type="radio" name="lvl" id="lb" onchange="updateProjectInfo()"><label for="lb">B</label>
               <input type="radio" name="lvl" id="lc" onchange="updateProjectInfo()"><label for="lc">C</label>
               <input type="radio" name="lvl" id="ld" onchange="updateProjectInfo()"><label for="ld">D</label>
             </div>
@@ -933,19 +934,6 @@ table.tbl .center { text-align: center; }
           </div>
           <div class="hw-grid" id="systemSelectGrid">
             <!-- 由 renderSystemSelects() 动态生成 -->
-          </div>
-        </div>
-
-        <div class="section" id="baselineSection">
-          <div class="section-head">
-            <h5>测试基线</h5>
-            <span class="hint">默认显示由系统配置推导出的"单一变量基线"；另可切换到 BASE_CONFIG_CHANGE 中配置的"配置变更基线"（单选一条）</span>
-          </div>
-          <div id="baselinePreviewList" style="display:flex;flex-direction:column;gap:var(--s-2)">
-            <!-- 由 renderBaselinePreview() 动态生成 -->
-          </div>
-          <div id="baselineSummary" style="margin-top:var(--s-3);padding:var(--s-3);background:var(--surface);border-radius:var(--r-3);font-size:var(--fs-sm)">
-            <!-- 基线汇总信息 -->
           </div>
         </div>
       </div>
@@ -1251,7 +1239,7 @@ const BASELINE_LIBRARY = {
 //       基础车型与配置完善中的同名基线，确保两处一致。
 // ============================================================================
 const BASE_CONFIG_CHANGE = {
-  'EVR四驱（主测车型基线）': {
+  '基础车型': {
     强化耐久试验:   "8",
     综合可靠性试验: "8",
     长里程验证:     "1",
@@ -1260,19 +1248,24 @@ const BASE_CONFIG_CHANGE = {
     '24通道测试':   "1",
     高低温四通道试验: "1",
     强化腐蚀试验:   "1",
-    大气暴露试验:   "1",
     超高速试验:     "3*",
     动力传动耐久试验: "1",
     高温高湿适应性:  "1*",
-    底盘误用工况:    "1",
+    高原适应性:  "1*",
+    底盘误用工况:    "1+1*",
     整车刮底试验:    "1*",
     整车托底试验:    "1*",
     轮胎磨耗试验:    "1",
     悬架冲击:        "1",
-    动力传动误用试验: "1*",
+    动力传动误用试验: "2*",
+    泼水误用试验: "2*",
+    泼水误用试验: "1*",
+    泼水误用试验: "1*",
+    泼水误用试验: "1*",
+    泼水误用试验: "1*",
   },
 
-  'EVR四驱增加EVR两驱': {
+  '同动力类型驱动形式变更': {
     强化耐久试验:   "3",
     综合可靠性试验: "3",
     长里程验证:     "1",
@@ -1284,8 +1277,8 @@ const BASE_CONFIG_CHANGE = {
     动力传动误用试验: "2*",
   },
 
-  '增加EV四驱': {
-    强化耐久试验:    "6",
+  '动力类型变更': {
+    强化耐久试验:    "7",
     综合可靠性试验:  "6",
     长里程验证:      "1",
     高温适应性:      "1",
@@ -1301,11 +1294,12 @@ const BASE_CONFIG_CHANGE = {
     动力传动误用试验: "2*",
   },
 
-  '基于EV四驱增加EV两驱': {
+  '底盘变更': {
     强化耐久试验:    "6",
-    综合可靠性试验:  "6",
+    综合可靠性试验:  "3",
     长里程验证:      "1",
-    高温适应性:      "1",
+    高温适应性:      "1+1*",
+	高原适应性:     "1*",
     高寒适应性:      "1+1*",
     高温高湿适应性:  "1*",
     底盘误用工况:    "2*",
@@ -1425,7 +1419,7 @@ const TEST_PRICES = {
     '悬架冲击':        {
         subject: '误用工况',
         alias: '悬架冲击试验',
-        price: 10,   priceExternal: 11.5,
+        price: 30,   priceExternal: 31.3,
         unit: '万/台', multiplier: 1,
     },
 
@@ -1447,7 +1441,7 @@ const TEST_PRICES = {
     '强化耐久试验':    {
         subject: '强化耐久可靠性',
         alias: '1.5万强化耐久',
-        price: 5.4,  priceExternal: 6.21,
+        price: 5.4,  priceExternal: 6.27,
         unit: '万公里', multiplier: 1.5,
     },
     '数据记录仪':      {
@@ -1467,19 +1461,19 @@ const TEST_PRICES = {
     '综合可靠性试验':  {
         subject: '综合工况可靠性',
         alias: '6万综合可靠性',
-        price: 4.6,  priceExternal: 5.29,
-        unit: '万公里', multiplier: 6,
+        price: 28.5,  priceExternal: 32.5,
+        unit: '万/台', multiplier: 1,
     },
     '动力传动耐久试验':{
         subject: '综合工况可靠性',
         alias: '15万动力传动试验',
-        price: 4.6,  priceExternal: 5.29,
+        price: 4.4,  priceExternal: 5.34,
         unit: '万公里', multiplier: 15,
     },
     '超高速试验':      {
         subject: '综合工况可靠性',
         alias: '超高速试验',
-        price: 4.6,  priceExternal: 5.29,
+        price: 4.6,  priceExternal: 5.3,
         unit: '万公里', multiplier: 0.5,
     },
 
@@ -1487,8 +1481,8 @@ const TEST_PRICES = {
     '长里程验证':      {
         subject: '社会道路可靠性',
         alias: '15万社会道路',
-        price: 2.7,  priceExternal: 3.11,
-        unit: '万公里', multiplier: 15,
+        price: 32.4,  priceExternal: 46.9,
+        unit: '万/台', multiplier: 1,
     },
     '轮胎磨耗试验':    {
         subject: '社会道路可靠性',
@@ -1590,6 +1584,214 @@ const TEST_PRICES = {
         price: 65,   priceExternal: 74.75,
         unit: '万/台', multiplier: 1,
     },
+
+    // ===== 可靠性试验 - 三高一湿适应性（新增） =====
+    '全国适应性试验15万km': {
+        subject: '三高一湿适应性',
+        alias: '全国适应性试验15万km',
+        price: 4.7,  priceExternal: 5.28,
+        unit: '万公里', multiplier: 15,
+    },
+    '全国适应性试验25万km': {
+        subject: '三高一湿适应性',
+        alias: '全国适应性试验25万km',
+        price: 4.7,  priceExternal: 5.28,
+        unit: '万公里', multiplier: 25,
+    },
+    '防滑链接触试验': {
+        subject: '三高一湿适应性',
+        alias: '防滑链接触试验',
+        price: 0.2,  priceExternal: 0.5,
+        unit: '万/台', multiplier: 1,
+    },
+    '雪侵入试验': {
+        subject: '三高一湿适应性',
+        alias: '雪侵入试验',
+        price: 0.1,  priceExternal: 0.5,
+        unit: '万/台', multiplier: 1,
+    },
+    '曲轴箱窜气通道冻结试验': {
+        subject: '三高一湿适应性',
+        alias: '曲轴箱窜气通道冻结试验',
+        price: 0.1,  priceExternal: 0.3,
+        unit: '万/台', multiplier: 1,
+    },
+    '扬尘试验': {
+        subject: '三高一湿适应性',
+        alias: '扬尘试验',
+        price: 0.1,  priceExternal: 0.3,
+        unit: '万/台', multiplier: 1,
+    },
+
+    // ===== 可靠性试验 - 强化耐久可靠性（新增） =====
+    '千斤顶刚性试验': {
+        subject: '强化耐久可靠性',
+        alias: '千斤顶刚性试验',
+        price: 8.1,  priceExternal: 11,
+        unit: '万/台', multiplier: 1,
+    },
+    '拖车钩强度试验': {
+        subject: '强化耐久可靠性',
+        alias: '拖车钩强度试验',
+        price: 0.1,  priceExternal: 0.4,
+        unit: '万/台', multiplier: 1,
+    },
+    '房车拖挂可靠性试验': {
+        subject: '强化耐久可靠性',
+        alias: '房车拖挂可靠性试验',
+        price: 5.5,  priceExternal: 7,
+        unit: '万公里', multiplier: 1.5,
+    },
+    '行李架可靠性试验': {
+        subject: '强化耐久可靠性',
+        alias: '行李架可靠性试验',
+        price: 8.1,  priceExternal: 11,
+        unit: '万/台', multiplier: 1,
+    },
+
+    // ===== 可靠性试验 - 误用工况（新增） =====
+    '泼水误用试验': {
+        subject: '误用工况',
+        alias: '泼水误用试验',
+        price: 0.1,  priceExternal: 1.2,
+        unit: '万/台', multiplier: 1,
+    },
+    '操作误用试验': {
+        subject: '误用工况',
+        alias: '操作误用试验',
+        price: 0.1,  priceExternal: 1.1,
+        unit: '万/台', multiplier: 1,
+    },
+    '充气补胎试验': {
+        subject: '误用工况',
+        alias: '充气补胎试验',
+        price: 0.2,  priceExternal: 0.6,
+        unit: '万/台', multiplier: 1,
+    },
+    '单轮垫高背门关闭试验': {
+        subject: '误用工况',
+        alias: '单轮垫高背门关闭试验',
+        price: 0,    priceExternal: 0.2,
+        unit: '万/台', multiplier: 1,
+    },
+    '机油白浊试验': {
+        subject: '误用工况',
+        alias: '机油白浊试验',
+        price: 0.1,  priceExternal: 0.3,
+        unit: '万/台', multiplier: 1,
+    },
+    '轮胎抗冲击试验': {
+        subject: '误用工况',
+        alias: '轮胎抗冲击试验',
+        price: 0.5,  priceExternal: 1,
+        unit: '万/台', multiplier: 1,
+    },
+    '轮胎单体抗冲击试验': {
+        subject: '误用工况',
+        alias: '轮胎单体抗冲击试验',
+        price: 2.4,  priceExternal: 2.6,
+        unit: '万/台', multiplier: 1,
+    },
+    '交叉轴操作试验': {
+        subject: '误用工况',
+        alias: '交叉轴操作试验',
+        price: 0,    priceExternal: 2.6,
+        unit: '万/台', multiplier: 1,
+    },
+    '螺栓夹紧力试验': {
+        subject: '误用工况',
+        alias: '螺栓夹紧力试验',
+        price: 3.2,  priceExternal: 10.5,
+        unit: '万/台', multiplier: 1,
+    },
+
+    // ===== 可靠性试验 - 强化腐蚀试验（新增） =====
+    '千斤顶刚性': {
+        subject: '强化腐蚀试验',
+        alias: '千斤顶刚性',
+        price: 0,    priceExternal: 0.2,
+        unit: '万/台', multiplier: 1,
+    },
+    '白车身(涂装)盐雾试验': {
+        subject: '强化腐蚀试验',
+        alias: '白车身(涂装)盐雾试验',
+        price: 5,    priceExternal: 20,
+        unit: '万/台', multiplier: 1,
+    },
+
+    // ===== 台架试验 - 整车24通道（新增） =====
+    '载荷谱采集（应变、加速度类）': {
+        subject: '整车24通道',
+        alias: '载荷谱采集（应变、加速度类）',
+        price: 16,   priceExternal: 16.8,
+        unit: '万/台', multiplier: 1,
+    },
+    '载荷谱采集（六分力类）': {
+        subject: '整车24通道',
+        alias: '载荷谱采集（六分力类）',
+        price: 21,   priceExternal: 29,
+        unit: '万/台', multiplier: 1,
+    },
+
+    // ===== 台架试验 - 整车12通道（新增） =====
+    '6自由度试验': {
+        subject: '整车12通道',
+        alias: '6自由度试验',
+        price: 1.8,  priceExternal: 19.4,
+        unit: '万/台', multiplier: 1,
+    },
+    '常温四门两盖试验': {
+        subject: '整车12通道',
+        alias: '常温四门两盖试验',
+        price: 0,    priceExternal: 5.9,
+        unit: '万/台', multiplier: 1,
+    },
+    '高低温四门两盖试验': {
+        subject: '整车12通道',
+        alias: '高低温四门两盖试验',
+        price: 40,   priceExternal: 41.6,
+        unit: '万/台', multiplier: 1,
+    },
+    '雨刮耐久试验': {
+        subject: '整车12通道',
+        alias: '雨刮耐久试验',
+        price: 0,    priceExternal: 4.8,
+        unit: '万/台', multiplier: 1,
+    },
+
+    // ===== 台架试验 - 四驱转鼓耐久台架（新增） =====
+    '高温转毂试验': {
+        subject: '四驱转鼓耐久台架',
+        alias: '高温转毂试验',
+        price: 65,   priceExternal: 66.1,
+        unit: '万/台', multiplier: 1,
+    },
+    '低温转毂试验': {
+        subject: '四驱转鼓耐久台架',
+        alias: '低温转毂试验',
+        price: 65,   priceExternal: 66.1,
+        unit: '万/台', multiplier: 1,
+    },
+
+    // ===== 专项试验（专项试验，排序在最末尾） =====
+    '尘洞试验': {
+        subject: '三高一湿适应性',
+        alias: '尘洞试验',
+        price: 0.5,  priceExternal: 1,
+        unit: '万/台', multiplier: 1,
+    },
+    '1/4悬架测试': {
+        subject: '整车12通道',
+        alias: '1/4悬架测试',
+        price: 5,    priceExternal: 100,
+        unit: '万/台', multiplier: 1,
+    },
+    '1/2悬架试验': {
+        subject: '整车12通道',
+        alias: '1/2悬架试验',
+        price: 5,    priceExternal: 100,
+        unit: '万/台', multiplier: 1,
+    },
 };
 
 // 统一取价函数：根据 projectInfo.costMode 选择 内部 / 委外 单价
@@ -1636,43 +1838,59 @@ function formatAmount(amount) {
 // 修改顺序只需调整此数组的元素顺序即可
 // ============================================================================
 const TEST_ITEM_ORDER = [
-     // 台架 - 高低温4通道
-    '高低温四通道试验',
-    '高低温4通道载荷谱',
-
-    // 台架 - 24通道
-    '24通道测试',
-	
-	 // 可靠性 - 强化耐久
+    // 可靠性 - 强化耐久可靠性
     '强化耐久试验',
+    '千斤顶刚性试验',
+    '拖车钩强度试验',
+    '房车拖挂可靠性试验',
+    '行李架可靠性试验',
     '数据记录仪',
     '物联卡',
-    // 可靠性 - 综合工况
+
+    // 可靠性 - 综合工况可靠性
     '综合可靠性试验',
     '动力传动耐久试验',
-    '超高速试验',	
-	 // 可靠性 - 社会道路
+    '超高速试验',
+
+    // 可靠性 - 社会道路可靠性
     '长里程验证',
     '轮胎磨耗试验',
-	 // 可靠性 - 三高一湿
+
+    // 可靠性 - 三高一湿适应性
+    '全国适应性试验15万km',
+    '全国适应性试验25万km',
     '高温适应性',
+    '高原适应性',
     '高寒适应性',
-	'高原适应性',
     '高温高湿适应性',
-	 // 台架 - 12通道
-    '环境仓开闭耐久',
+    '防滑链接触试验',
+    '雪侵入试验',
+    '曲轴箱窜气通道冻结试验',
+    '扬尘试验',
 
-    // 可靠性 - 强化腐蚀
+    // 可靠性 - 强化腐蚀试验
     '强化腐蚀试验',
+    '千斤顶刚性',
+    '白车身(涂装)盐雾试验',
 
-    // 可靠性 - 大气暴露
+    // 可靠性 - 大气暴露试验
     '大气暴露试验',
-	// 可靠性 - 误用工况
+
+    // 可靠性 - 误用工况
     '底盘误用工况',
     '动力传动误用试验',
-    '悬架冲击',    
-	
-	// 可靠性 - 电池包托底
+    '悬架冲击',
+    '泼水误用试验',
+    '操作误用试验',
+    '充气补胎试验',
+    '单轮垫高背门关闭试验',
+    '机油白浊试验',
+    '轮胎抗冲击试验',
+    '轮胎单体抗冲击试验',
+    '交叉轴操作试验',
+    '螺栓夹紧力试验',
+
+    // 可靠性 - 电池包托底试验
     '整车托底试验',
     '整车刮底试验',
 
@@ -1680,10 +1898,31 @@ const TEST_ITEM_ORDER = [
     '常温四通道试验',
     '常温4通道载荷谱',
 
-    // 台架 - 四驱转鼓
+    // 台架 - 高低温4通道
+    '高低温四通道试验',
+    '高低温4通道载荷谱',
+
+    // 台架 - 整车24通道
+    '24通道测试',
+    '载荷谱采集（应变、加速度类）',
+    '载荷谱采集（六分力类）',
+
+    // 台架 - 整车12通道
+    '环境仓开闭耐久',
+    '6自由度试验',
+    '常温四门两盖试验',
+    '高低温四门两盖试验',
+    '雨刮耐久试验',
+
+    // 台架 - 四驱转鼓耐久台架
     '高低温转毂试验',
-	
-	
+    '高温转毂试验',
+    '低温转毂试验',
+
+    // 专项试验（放在最末尾）
+    '尘洞试验',
+    '1/4悬架测试',
+    '1/2悬架试验',
 ];
 
 // ============================================================================
@@ -1710,12 +1949,21 @@ function calcAutoItemQty(config) {
 }
 
 // ============================================================================
+// 固定候选列表：isFixed 系统（动力类型/驱动形式）的选项 label 只能从此列表中选择
+// value 与 label 保持一致，便于配置矩阵与显示逻辑统一
+// ============================================================================
+const FIXED_POWER_TYPE_OPTIONS = ['EVR', 'EV', '插电', '燃油', '氢燃料电池'];
+const FIXED_DRIVE_TYPE_OPTIONS = ['四驱', '前驱', '后驱'];
+
+// ============================================================================
 // 车辆系统选项库 (vehicleSystems)
 // 定义各系统的可选项，用于配置管理中的系统打点选择
 // 每个系统通过 baselineSystem 关联到 BASELINE_DATA 中的系统名称
 // 每个选项通过 devType 指定开发类型（null=完全借用，字符串=新开对应的开发程度）
 // 当配置选择了某系统选项后，自动推导出对应的测试基线
 // 此为运行时变量，可在"项目设置-系统配置矩阵"中动态编辑
+// 注意：isFixed=true 的系统（动力类型/驱动形式）选项可增删，但 label 只能从
+//       FIXED_POWER_TYPE_OPTIONS / FIXED_DRIVE_TYPE_OPTIONS 中下拉选择
 // ============================================================================
 let vehicleSystems = [
     {
@@ -1724,8 +1972,11 @@ let vehicleSystems = [
         baselineSystem: '',
         isFixed: true,
         options: [
-            { value: 'EV', label: 'EV 纯电', devType: null },
-            { value: 'EVR', label: 'EVR 增程', devType: null }
+            { value: 'EVR', label: 'EVR', devType: null },
+            { value: 'EV', label: 'EV', devType: null },
+            { value: '插电', label: '插电', devType: null },
+            { value: '燃油', label: '燃油', devType: null },
+            { value: '氢燃料电池', label: '氢燃料电池', devType: null }
         ]
     },
     {
@@ -1734,10 +1985,9 @@ let vehicleSystems = [
         baselineSystem: '',
         isFixed: true,
         options: [
-            { value: '4WD', label: '四驱', devType: null },
-            { value: '2WD', label: '两驱', devType: null },
-            { value: 'FWD', label: '前驱', devType: null },
-            { value: 'RWD', label: '后驱', devType: null }
+            { value: '四驱', label: '四驱', devType: null },
+            { value: '前驱', label: '前驱', devType: null },
+            { value: '后驱', label: '后驱', devType: null }
         ]
     },
     {
@@ -2040,7 +2290,8 @@ function updateProjectInfo() {
     const levelRadios = document.querySelectorAll('input[name="lvl"]');
     for (const r of levelRadios) {
         if (r.checked) {
-            projectInfo.level = r.id === 'la' ? 'A' : r.id === 'lc' ? 'C' : 'D';
+            // 级别仅用于展示，不与基线关联
+            projectInfo.level = r.id === 'la' ? 'A' : r.id === 'lb' ? 'B' : r.id === 'lc' ? 'C' : 'D';
             break;
         }
     }
@@ -2058,6 +2309,7 @@ function updateProjectInfo() {
 
     document.getElementById('topbarProjectName').textContent = projectInfo.code;
     document.getElementById('topbarProjectLevel').textContent = projectInfo.level;
+    document.getElementById('topbarProjectLeader').textContent = projectInfo.leader;
     document.getElementById('topbarCostMode').textContent = projectInfo.costMode === 'external' ? '委外' : '内部项目';
 
     handleProjectLevelChange(oldLevel, projectInfo.level);
@@ -2079,16 +2331,16 @@ function updateProjectInfo() {
 
 // ============================================================================
 // 项目级别变更处理
-// A类项目: 自动创建基础车型，绑定"增程器|||供应商全新平台、全新开发"基线
-//          基础车型数量暂时与增程器供应商全新平台一致，后续可手动调整
-// C/D类项目: 无基础车型，所有配置均为单一变量
+// 注意：级别仅用于展示，不与基线关联
+// A类项目: 自动创建基础车型
+// B/C/D类项目: 无基础车型，所有配置均为单一变量
 // ============================================================================
 function handleProjectLevelChange(oldLevel, newLevel) {
     if (oldLevel === newLevel) return;
     
     if (newLevel === 'A') {
         autoCreateBaseConfig();
-    } else if (newLevel === 'C' || newLevel === 'D') {
+    } else if (newLevel === 'B' || newLevel === 'C' || newLevel === 'D') {
         convertToDerivedConfigs();
     }
 }
@@ -2119,14 +2371,14 @@ function autoCreateBaseConfig() {
         : [{ _kind: 'auto',   system, devType, sourceSystems: [BASE_CONFIG_KEY], selected: true }];
 
     // 构建基础车型的默认 systems（与 renderSystemSelects 默认值逻辑保持一致：
-    // 每个系统默认选中第一个选项，powerType/driveType 指定为 EVR/4WD）
+    // 每个系统默认选中第一个选项，powerType/driveType 指定为 EVR/四驱）
     const baseSystems = {};
     vehicleSystems.forEach(sys => {
         if (!sys.options || sys.options.length === 0) return;
         if (sys.key === 'powerType') {
             baseSystems[sys.key] = 'EVR';
         } else if (sys.key === 'driveType') {
-            baseSystems[sys.key] = '4WD';
+            baseSystems[sys.key] = '四驱';
         } else {
             baseSystems[sys.key] = sys.options[0].value;
         }
@@ -2136,7 +2388,7 @@ function autoCreateBaseConfig() {
         name: 'EVR四驱 主测车型',
         code: projectInfo.code + '-EVR4WD-MAIN',
         powerType: 'EVR',
-        drive: '4WD',
+        drive: '四驱',
         systems: baseSystems,
         hw: {},
         basisCodes: [],
@@ -2150,21 +2402,15 @@ function autoCreateBaseConfig() {
 
     renderConfigTable();
     updateBadges();
-    showToast(
-        'success',
-        '基础车型已创建',
-        '已创建 1 条基础配置：EVR四驱 主测车型。其它衍生配置请使用"新增配置"创建，测试基线可选 EV四驱/EV两驱/EVR两驱 等变更基线。'
-    );
 }
 
 function convertToDerivedConfigs() {
     selectedConfigs.forEach(config => {
         config.isBaseConfig = false;
     });
-    
+
     renderConfigTable();
     updateBadges();
-    showToast('info', '配置已更新', 'C/D类项目所有配置已转为单一变量车型');
 }
 
 function init() {
@@ -2255,14 +2501,31 @@ function renderVehicleSystems() {
                     `<option value="${dt.name}" ${opt.devType === dt.name ? 'selected' : ''}>${dt.name}</option>`
                 )).join('');
 
+            // isFixed 系统：label 从固定候选列表下拉选择（value 与 label 同步），可增删
+            if (sys.isFixed) {
+                const fixedList = sys.key === 'powerType' ? FIXED_POWER_TYPE_OPTIONS : FIXED_DRIVE_TYPE_OPTIONS;
+                const fixedOptsHtml = fixedList.map(item =>
+                    `<option value="${item}" ${item === opt.label ? 'selected' : ''}>${item}</option>`
+                ).join('');
+                return `
+                <div style="display:flex;gap:var(--s-2);align-items:center;margin-bottom:var(--s-2);flex-wrap:wrap">
+                    <span class="small muted" style="width:50px;flex-shrink:0">选项${optIdx + 1}</span>
+                    <select class="select" onchange="updateFixedSystemOption(${sysIdx}, ${optIdx}, this.value)" style="flex:1;min-width:120px">
+                        ${fixedOptsHtml}
+                    </select>
+                    <button class="btn sm ghost danger" onclick="removeSystemOption(${sysIdx}, ${optIdx})" style="flex-shrink:0">删除</button>
+                </div>
+                `;
+            }
+
             return `
             <div style="display:flex;gap:var(--s-2);align-items:center;margin-bottom:var(--s-2);flex-wrap:wrap">
                 <span class="small muted" style="width:50px;flex-shrink:0">选项${optIdx + 1}</span>
                 <input class="input" value="${opt.label}" placeholder="选项显示名"
                        onchange="updateSystemOption(${sysIdx}, ${optIdx}, 'label', this.value)" style="flex:1;min-width:120px">
-                ${sys.isFixed ? '' : `<select class="select" onchange="updateSystemOption(${sysIdx}, ${optIdx}, 'devType', this.value)" style="flex:2;min-width:180px" ${!sys.baselineSystem ? 'disabled' : ''}>
+                <select class="select" onchange="updateSystemOption(${sysIdx}, ${optIdx}, 'devType', this.value)" style="flex:2;min-width:180px" ${!sys.baselineSystem ? 'disabled' : ''}>
                     ${devTypeOptions}
-                </select>`}
+                </select>
                 <button class="btn sm ghost danger" onclick="removeSystemOption(${sysIdx}, ${optIdx})" style="flex-shrink:0">删除</button>
             </div>
             `;
@@ -2384,17 +2647,53 @@ function updateSystemKey(idx, newKey) {
 
 // ============================================================================
 // 系统配置矩阵 — 选项管理
-// value自动生成，用户只需编辑显示名(label)和开发类型(devType)
+// isFixed 系统：value = label，从固定候选列表下拉选择
+// 非 isFixed 系统：value 自动生成，用户编辑 label 和 devType
 // ============================================================================
+
+// isFixed 系统选项变更：value 与 label 同步更新
+function updateFixedSystemOption(sysIdx, optIdx, newLabel) {
+    const opt = vehicleSystems[sysIdx].options[optIdx];
+    const oldValue = opt.value;
+
+    opt.label = newLabel;
+    opt.value = newLabel;
+
+    // 同步更新所有配置中该系统选中的旧值
+    selectedConfigs.forEach(cfg => {
+        if (cfg.systems && cfg.systems[vehicleSystems[sysIdx].key] === oldValue) {
+            cfg.systems[vehicleSystems[sysIdx].key] = newLabel;
+            if (vehicleSystems[sysIdx].key === 'powerType') cfg.powerType = newLabel;
+            if (vehicleSystems[sysIdx].key === 'driveType') cfg.drive = newLabel;
+        }
+    });
+
+    renderVehicleSystems();
+    renderConfigTable();
+    if (typeof renderAdjustTable === 'function') renderAdjustTable();
+}
+
 function addSystemOption(sysIdx) {
-    let newValue;
-    let counter = vehicleSystems[sysIdx].options.length;
-    do {
-        newValue = 'opt_' + sysIdx + '_' + counter;
-        counter++;
-    } while (vehicleSystems[sysIdx].options.some(o => o.value === newValue));
-    
-    vehicleSystems[sysIdx].options.push({ value: newValue, label: '新选项', devType: null });
+    const sys = vehicleSystems[sysIdx];
+
+    if (sys.isFixed) {
+        // isFixed 系统：从固定候选列表中选第一个未被使用的
+        const fixedList = sys.key === 'powerType' ? FIXED_POWER_TYPE_OPTIONS : FIXED_DRIVE_TYPE_OPTIONS;
+        const usedLabels = sys.options.map(o => o.label);
+        const available = fixedList.find(item => !usedLabels.includes(item));
+        const newLabel = available || fixedList[0];
+        sys.options.push({ value: newLabel, label: newLabel, devType: null });
+    } else {
+        // 非 isFixed 系统：value 自动生成
+        let newValue;
+        let counter = sys.options.length;
+        do {
+            newValue = 'opt_' + sysIdx + '_' + counter;
+            counter++;
+        } while (sys.options.some(o => o.value === newValue));
+        sys.options.push({ value: newValue, label: '新选项', devType: null });
+    }
+
     renderVehicleSystems();
 }
 
@@ -2445,7 +2744,7 @@ function confirmAddConfig() {
         name: name,
         code: code,
         powerType: 'EV',
-        drive: '4WD',
+        drive: '四驱',
         systems: {},
         hw: {},
         basisCodes: [],
@@ -2513,136 +2812,6 @@ function onSystemSelectChange(sysKey) {
     
     const opt = sys.options.find(o => o.value === sel.value);
     devTypeEl.innerHTML = getDevTypeBadgeHtml(opt);
-    
-    // 更新基线预览
-    updateBaselinePreviewFromDrawer();
-}
-
-// ============================================================================
-// 基线预览 — 从抽屉中收集当前系统选择，推导并显示基线
-// 同时列出：
-//   1) 单一变量基线（由系统配置自动推导）
-//   2) 配置变更基线（BASE_CONFIG_CHANGE 中自定义的基线）
-// ============================================================================
-function updateBaselinePreviewFromDrawer() {
-    const systems = {};
-    vehicleSystems.forEach(sys => {
-        const sel = document.getElementById('sys_' + sys.key);
-        if (sel) systems[sys.key] = sel.value;
-    });
-
-    // 与样车调整表格使用同一公共函数，保证两处基线列表一致且关联
-    const items = buildConfigBaselineItems({ systems });
-    renderBaselinePreview(items);
-}
-
-function renderBaselinePreview(items) {
-    const container = document.getElementById('baselinePreviewList');
-    const summaryEl = document.getElementById('baselineSummary');
-    if (!container || !summaryEl) return;
-
-    if (items.length === 0) {
-        container.innerHTML = `
-            <div style="padding:var(--s-4);background:var(--warn-soft);border-radius:var(--r-3);color:var(--warn);font-size:var(--fs-sm)">
-                <strong>未找到任何测试基线</strong><br>
-                既没有从系统配置推导出"单一变量基线"，也没有配置"配置变更基线"。<br>
-                请在"项目设置-系统配置矩阵"中选择"新开"开发类型，或在代码中配置 BASE_CONFIG_CHANGE。
-            </div>
-        `;
-        summaryEl.innerHTML = '<span class="muted">基线新车：0 台 · 基线借用：0 台 · 预估费用：0.00 万元</span>';
-        return;
-    }
-
-    const currentConfig = currentEditingConfig !== null ? selectedConfigs[currentEditingConfig] : null;
-    const savedItems = currentConfig?.items || [];
-    // 若当前配置之前保存过，以"上次选中的那条"为默认选中
-    const savedSelected = savedItems.find(s => s.selected === true);
-
-    let hasChecked = false;
-    container.innerHTML = items.map((item, idx) => {
-        // 1) 如果有保存过的基线，完全匹配 system+devType+_kind+_tests 则选中
-        const sameRef = savedSelected
-            && savedSelected.system === item.system
-            && savedSelected.devType === item.devType
-            && (savedSelected._kind || 'auto') === (item._kind || 'auto');
-        const isChecked = !!sameRef || (!savedSelected && item.selected === true && !hasChecked);
-        if (isChecked) hasChecked = true;
-
-        const sourceText = item._kind === 'custom'
-            ? '配置变更基线'
-            : (item.sourceSystems ? item.sourceSystems.join('、') : '单一变量基线');
-
-        const tests = getTestsForItem(item);
-        const { baseNew, baseBorrow, estCost } = summarizeTests(tests);
-
-        const tagStyle = item._kind === 'custom'
-            ? 'background:var(--accent-soft);color:var(--accent-hover)'
-            : 'background:var(--ok-soft);color:var(--ok)';
-        const tagLabel = item._kind === 'custom' ? '配置变更' : '单一变量';
-
-        return `
-            <div style="display:flex;align-items:flex-start;gap:var(--s-3);padding:var(--s-3);background:var(--surface);border-radius:var(--r-3);border:1px solid var(--border)">
-                <input type="radio" name="baselineSelect" id="baseline_${idx}" ${isChecked ? 'checked' : ''}
-                       onchange="updateBaselineSelection()"
-                       style="margin-top:2px;flex-shrink:0">
-                <label for="baseline_${idx}" style="flex:1;cursor:pointer;margin:0">
-                    <div style="display:flex;justify-content:space-between;align-items:center;gap:var(--s-2)">
-                        <span style="font-weight:600">${formatBaselineDisplayLabel(item)}</span>
-                        <span class="chip small" style="${tagStyle}">${tagLabel}</span>
-                    </div>
-                    <div class="small" style="color:var(--text-muted);margin-top:2px">${item.devType}${sourceText ? ' · 来自：' + sourceText : ''}</div>
-                    <div class="small" style="margin-top:var(--s-1)">
-                        <span class="chip" style="background:var(--ok-soft);color:var(--ok)">新车 ${baseNew} 台</span>
-                        <span class="chip" style="background:var(--info-soft);color:var(--info);margin-left:4px">借用 ${baseBorrow} 台</span>
-                        <span class="chip" style="background:var(--accent-soft);color:var(--accent-hover);margin-left:4px">预估 ${estCost.toFixed(2)} 万</span>
-                    </div>
-                </label>
-            </div>
-        `;
-    }).join('');
-
-    updateBaselineSummary(items);
-}
-
-function updateBaselineSummary(items) {
-    const summaryEl = document.getElementById('baselineSummary');
-    if (!summaryEl) return;
-
-    if (items.length === 0) {
-        summaryEl.innerHTML = '<span class="muted">基线新车：0 台 · 基线借用：0 台 · 预估费用：0.00 万元</span>';
-        return;
-    }
-
-    const selectedIdx = items.findIndex((_, idx) => {
-        const radio = document.getElementById('baseline_' + idx);
-        return radio && radio.checked;
-    });
-    const selectedItem = selectedIdx >= 0 ? items[selectedIdx] : items[0];
-    const tests = getTestsForItem(selectedItem);
-    const { baseNew: totalNew, baseBorrow: totalBorrow, estCost: totalCost } = summarizeTests(tests);
-
-    summaryEl.innerHTML = `
-        <div style="display:flex;justify-content:space-between;align-items:center">
-            <span><strong>已选基线</strong> · ${formatBaselineDisplayLabel(selectedItem)}</span>
-            <span class="small muted">${items.length} 个可用基线（单一变量 + 配置变更）</span>
-        </div>
-        <div style="margin-top:var(--s-2);display:flex;gap:var(--s-3)">
-            <span class="chip" style="background:var(--ok-soft);color:var(--ok)">新车 ${totalNew} 台</span>
-            <span class="chip" style="background:var(--info-soft);color:var(--info)">借用 ${totalBorrow} 台</span>
-            <span class="chip" style="background:var(--accent-soft);color:var(--accent-hover)">预估 ${totalCost.toFixed(2)} 万元</span>
-        </div>
-    `;
-}
-
-function updateBaselineSelection() {
-    const systems = {};
-    vehicleSystems.forEach(sys => {
-        const sel = document.getElementById('sys_' + sys.key);
-        if (sel) systems[sys.key] = sel.value;
-    });
-    const items = deriveItemsFromSystems({ systems });
-    appendChangeBaselines(items);
-    updateBaselineSummary(items);
 }
 
 function openConfigDrawer(configIndex = null) {
@@ -2660,10 +2829,7 @@ function openConfigDrawer(configIndex = null) {
 
     // 渲染系统配置下拉选择，并恢复当前配置的选中值
     renderSystemSelects(config.systems || {});
-    
-    // 渲染基线预览
-    updateBaselinePreviewFromDrawer();
-    
+
     document.getElementById('configDrawerOverlay').classList.add('open');
     document.getElementById('configDrawerPanel').classList.add('open');
 }
@@ -2701,24 +2867,16 @@ function saveConfig() {
             if (sel) systems[sys.key] = sel.value;
         });
 
-        // 生成"单一变量基线 + 配置变更基线"的完整列表，供用户单选
-        const items = deriveItemsFromSystems({ systems });
-        appendChangeBaselines(items);
-
-        // 收集用户选择的基线（从抽屉中的单选按钮）
-        const selectedRadio = document.querySelector('input[name="baselineSelect"]:checked');
-        const selectedIdx = selectedRadio ? parseInt(selectedRadio.id.replace('baseline_', '')) : -1;
-        items.forEach((item, idx) => {
-            item.selected = idx === selectedIdx;
-        });
+        // 生成"单一变量基线 + 配置变更基线"的完整列表
+        // 测试基线的选择已移至配置矩阵中（updateConfigBaseline），此处保留配置原有的选中状态
+        const preserved = (currentEditingConfig !== null && currentEditingConfig >= 0 && currentEditingConfig < selectedConfigs.length)
+            ? selectedConfigs[currentEditingConfig] : null;
+        const items = buildConfigBaselineItems({ systems, items: preserved ? preserved.items : [] });
 
         // 动力类型和驱动形式从系统配置中获取
         const powerType = systems.powerType || 'EV';
-        const drive = systems.driveType || '4WD';
+        const drive = systems.driveType || '四驱';
 
-        const preserved = (currentEditingConfig !== null && currentEditingConfig >= 0 && currentEditingConfig < selectedConfigs.length)
-            ? selectedConfigs[currentEditingConfig]
-            : null;
         const newConfig = {
             name, code, powerType, drive, systems,
             hw: {},
@@ -2781,45 +2939,52 @@ function showPage(pageId) {
 
 // ============================================================================
 // 渲染配置管理表格 (renderConfigTable)
-// 按动力类型分组（EV / EVR），每组有分区标题显示数量统计
+// 按动力类型动态分组，每组有分区标题显示数量统计
 // 列顺序: 配置名称/编码 | 硬件属性 | 测试策略 | 金额 | 状态 | 操作
 // ============================================================================
 function renderConfigTable() {
     const tbody = document.getElementById('configTableBody');
     tbody.innerHTML = '';
-    
+
     document.getElementById('cfgTotal').textContent = selectedConfigs.length;
     const completedCount = selectedConfigs.filter(c => c.completed).length;
     document.getElementById('selCount').textContent = completedCount;
-    
-    // 按动力类型分组（EVR 在前，EV 在后，保证基础车型先显示）
-    const zones = {
-        'EVR': { label: '增程', configs: [], indices: [] },
-        'EV': { label: '纯电动', configs: [], indices: [] }
-    };
+
+    // 按动力类型动态分组（顺序跟随 vehicleSystems 中 powerType 的选项顺序）
+    const powerTypeSys = vehicleSystems.find(s => s.key === 'powerType');
+    const zoneOrder = powerTypeSys ? powerTypeSys.options.map(o => o.value) : ['EVR', 'EV'];
+    const zoneLabelMap = {};
+    powerTypeSys.options.forEach(o => { zoneLabelMap[o.value] = o.label; });
+    const zones = {};
+    zoneOrder.forEach(v => { zones[v] = { configs: [], indices: [] }; });
+    // 兜底：未匹配的动力类型归入"其他"
+    zones['_other'] = { configs: [], indices: [] };
 
     selectedConfigs.forEach((config, idx) => {
-        const zone = config.powerType && config.powerType.toUpperCase() === 'EVR' ? 'EVR' : 'EV';
-        zones[zone].configs.push(config);
-        zones[zone].indices.push(idx);
+        const pt = config.powerType || '';
+        const zoneKey = zoneOrder.includes(pt) ? pt : '_other';
+        zones[zoneKey].configs.push(config);
+        zones[zoneKey].indices.push(idx);
     });
-    
+
     let grandTotal = 0;
-    
+
     Object.entries(zones).forEach(([zoneKey, zone]) => {
         if (zone.configs.length === 0) return;
-        
+
         // 统计该分区的基础车型数量
         const mainCount = zone.configs.filter(c => c.isBaseConfig).length;
-        
-        // 分区标题行
+        const zoneLabel = zoneKey === '_other' ? '其他' : (zoneLabelMap[zoneKey] || zoneKey);
+
+        // 分区标题行（EVR 用 evr 样式，EV 用 ev 样式，其余用默认）
+        const tagClass = zoneKey === 'EVR' ? 'evr' : zoneKey === 'EV' ? 'ev' : '';
         const zoneRow = document.createElement('tr');
         zoneRow.className = 'zone-row';
         zoneRow.innerHTML = `
             <td colspan="6" style="padding:0">
                 <div class="zone-head">
-                    <span class="tag ${zoneKey === 'EV' ? 'ev' : 'evr'}">${zoneKey}</span>
-                    <b>${zone.label}</b>
+                    <span class="tag ${tagClass}">${zoneLabel}</span>
+                    <b>${zoneLabel}</b>
                     <span class="grow"></span>
                     <span>本分区 <b>${zone.configs.length}</b> 项 · 基础车型 <b>${mainCount}</b></span>
                 </div>
@@ -2871,11 +3036,14 @@ function renderConfigTable() {
             
             // 硬件属性chips：优先显示动力+驱动，再叠加 systems 数据，兼容旧 hw 数据
             let hardwareChips = '';
+            const powerOpt = powerTypeSys ? powerTypeSys.options.find(o => o.value === config.powerType) : null;
             const powerChip = config.powerType
-                ? `<span class="chip hw"><b>动力</b>${config.powerType === 'EVR' ? '增程 EVR' : '纯电 EV'}</span>`
+                ? `<span class="chip hw"><b>动力</b>${powerOpt ? powerOpt.label : config.powerType}</span>`
                 : '';
+            const driveTypeSys = vehicleSystems.find(s => s.key === 'driveType');
+            const driveOpt = driveTypeSys ? driveTypeSys.options.find(o => o.value === config.drive) : null;
             const driveChip = config.drive
-                ? `<span class="chip hw"><b>驱动</b>${config.drive === '4WD' ? '四驱' : '两驱'}</span>`
+                ? `<span class="chip hw"><b>驱动</b>${driveOpt ? driveOpt.label : config.drive}</span>`
                 : '';
 
             if (config.systems && Object.keys(config.systems).length > 0) {
@@ -3385,6 +3553,8 @@ function renderAdjustTable() {
             </th>
         `;
     });
+    headHtml += '<th style="min-width:100px;text-align:center;vertical-align:top"><div style="font-weight:600">单价</div></th>';
+    headHtml += '<th style="min-width:120px;text-align:center;vertical-align:top"><div style="font-weight:600">总价</div></th>';
     head.innerHTML = headHtml;
 
     // 收集所有试验项目（与样车调整表格纵轴完全一致的来源，抽公共函数）
@@ -3397,11 +3567,15 @@ function renderAdjustTable() {
 
     // --- 上半部：配置矩阵系统项行（基础车型单选 + 各系统下拉）---
     tbody.insertAdjacentHTML('beforeend', buildConfigMatrixRowsHtml('_adjust'));
+    // 为矩阵行补单价、总价空列（保持列对齐）
+    tbody.querySelectorAll('tr').forEach(r => {
+        r.insertAdjacentHTML('beforeend', '<td style="background:var(--bg-elevated)"></td><td style="background:var(--bg-elevated)"></td>');
+    });
 
     // 分隔行：区分配置矩阵区与试验项目区
     const separatorRow = document.createElement('tr');
     separatorRow.style.background = 'var(--bg-elevated)';
-    separatorRow.innerHTML = `<td colspan="${selectedConfigs.length + 1}" style="padding:6px 12px;font-size:11px;color:var(--text-muted);font-weight:600;letter-spacing:1px;border-top:2px solid var(--border);border-bottom:1px solid var(--border)">试验项目（新车 / 借用）</td>`;
+    separatorRow.innerHTML = `<td colspan="${selectedConfigs.length + 3}" style="padding:6px 12px;font-size:11px;color:var(--text-muted);font-weight:600;letter-spacing:1px;border-top:2px solid var(--border);border-bottom:1px solid var(--border)">试验项目（新车 / 借用）</td>`;
     tbody.appendChild(separatorRow);
 
     // --- 下半部：试验项目行（自动计算项不在样车调整表格中显示，仅在预算导出中体现）---
@@ -3416,6 +3590,7 @@ function renderAdjustTable() {
             ? ' <span class="chip small" style="background:var(--accent-soft);color:var(--accent-hover);font-size:10px">自动计算</span>'
             : '';
         let rowHtml = `<td style="position:sticky;left:0;z-index:1;background:var(--surface);font-weight:500;white-space:nowrap">${testName}${autoBadge}</td>`;
+        let testTotalQty = 0;  // 该试验项目所有配置的新车+借用总数
 
         // 每个配置的输入框
         selectedConfigs.forEach((cfg, cfgIdx) => {
@@ -3444,6 +3619,7 @@ function renderAdjustTable() {
                 // 费用 = (新车 + 借用) × 单价 × 倍率
                 configSums[cfgIdx].cost += (finalNew + finalBorrow) * price * multiplier;
             }
+            testTotalQty += finalNew + finalBorrow;
 
             if (isAuto) {
                 // 自动项：只读显示，不提供输入框，不同背景色
@@ -3471,14 +3647,33 @@ function renderAdjustTable() {
             }
         });
 
+        // --- 单价列：展示单价计算（如"1.5*5.4=8.10万/台"） ---
+        // --- 总价列：所有配置新车+借用之和 × 单价，加id便于局部刷新 ---
+        if (TEST_PRICES[testName]) {
+            const price = getTestPrice(testName);
+            const multiplier = TEST_PRICES[testName].multiplier || 1;
+            const unitPrice = multiplier * price;
+            if (multiplier !== 1) {
+                rowHtml += `<td style="text-align:center;font-size:11px;color:var(--text-muted);background:var(--bg-elevated);white-space:nowrap">${multiplier}*${price}万/台=<br><b style="color:var(--accent-hover)">${unitPrice.toFixed(2)}万/台</b></td>`;
+            } else {
+                rowHtml += `<td style="text-align:center;font-size:11px;color:var(--text-muted);background:var(--bg-elevated);white-space:nowrap">${price}万/台</td>`;
+            }
+            const testTotalCost = testTotalQty * unitPrice;
+            rowHtml += `<td id="totalCell_${testName}" style="text-align:center;font-size:12px;font-weight:600;color:var(--accent-hover);background:var(--bg-elevated);white-space:nowrap">${testTotalQty}×${unitPrice.toFixed(2)}=<br>${testTotalCost.toFixed(2)}万元</td>`;
+        } else {
+            rowHtml += '<td style="background:var(--bg-elevated)"></td><td style="background:var(--bg-elevated)"></td>';
+        }
+
         row.innerHTML = rowHtml;
         tbody.appendChild(row);
     });
 
-    // 表尾：每个配置的样车数量汇总和费用
+    // 表尾：每个配置的样车数量汇总和费用 + 总价合计
     if (tfoot) {
         let footHtml = `<td style="position:sticky;left:0;z-index:2;background:var(--bg-elevated);font-weight:700;white-space:nowrap">合计</td>`;
+        let grandTotal = 0;
         configSums.forEach(sum => {
+            grandTotal += sum.cost;
             footHtml += `
                 <td style="text-align:center;background:var(--bg-elevated);font-weight:600">
                     <div style="font-size:12px">
@@ -3490,6 +3685,8 @@ function renderAdjustTable() {
                 </td>
             `;
         });
+        footHtml += `<td style="background:var(--bg-elevated)"></td>`;
+        footHtml += `<td id="grandTotalCell" style="text-align:center;background:var(--bg-elevated);font-weight:700;color:var(--accent-hover);white-space:nowrap">合计：<br>${grandTotal.toFixed(2)}万元</td>`;
         tfoot.innerHTML = footHtml;
     }
 
@@ -3560,7 +3757,9 @@ function updateAdjustFootAndKPIs() {
             return { newCount, borrowCount, cost };
         });
         let footHtml = `<td style="position:sticky;left:0;z-index:2;background:var(--bg-elevated);font-weight:700;white-space:nowrap">合计</td>`;
+        let grandTotal = 0;
         configSums.forEach(sum => {
+            grandTotal += sum.cost;
             footHtml += `
                 <td style="text-align:center;background:var(--bg-elevated);font-weight:600">
                     <div style="font-size:12px">
@@ -3572,8 +3771,34 @@ function updateAdjustFootAndKPIs() {
                 </td>
             `;
         });
+        footHtml += `<td style="background:var(--bg-elevated)"></td>`;
+        footHtml += `<td id="grandTotalCell" style="text-align:center;background:var(--bg-elevated);font-weight:700;color:var(--accent-hover);white-space:nowrap">合计：<br>${grandTotal.toFixed(2)}万元</td>`;
         tfoot.innerHTML = footHtml;
     }
+
+    // 局部刷新各试验项目的总价单元格（不重渲染整个表格，避免输入框失焦）
+    const sortedTestNames = collectAllTestNames();
+    sortedTestNames.forEach(testName => {
+        if (AUTO_CALC_ITEMS.has(testName)) return;
+        const cell = document.getElementById(`totalCell_${testName}`);
+        if (!cell) return;
+        // 重新计算该试验项目所有配置的新车+借用总数
+        let testTotalQty = 0;
+        selectedConfigs.forEach(cfg => {
+            const baseline = getBaselineQtyForConfig(cfg, testName);
+            const adj = cfg.adjustments?.[testName] || { newChange: 0, borrowChange: 0 };
+            const finalNew = Math.max(0, baseline.baseNew + (adj.newChange || 0));
+            const finalBorrow = Math.max(0, baseline.baseBorrow + (adj.borrowChange || 0));
+            testTotalQty += finalNew + finalBorrow;
+        });
+        if (TEST_PRICES[testName]) {
+            const price = getTestPrice(testName);
+            const multiplier = TEST_PRICES[testName].multiplier || 1;
+            const unitPrice = multiplier * price;
+            const testTotalCost = testTotalQty * unitPrice;
+            cell.innerHTML = `${testTotalQty}×${unitPrice.toFixed(2)}=<br>${testTotalCost.toFixed(2)}万元`;
+        }
+    });
 
     updateAdjustKPIs();
 }
@@ -3897,6 +4122,7 @@ function importProjectConfig(data) {
         const levelRadios = document.querySelectorAll('input[name="lvl"]');
         levelRadios.forEach(r => {
             if (r.id === 'la' && projectInfo.level === 'A') r.checked = true;
+            else if (r.id === 'lb' && projectInfo.level === 'B') r.checked = true;
             else if (r.id === 'lc' && projectInfo.level === 'C') r.checked = true;
             else if (r.id === 'ld' && projectInfo.level === 'D') r.checked = true;
         });
@@ -3908,6 +4134,7 @@ function importProjectConfig(data) {
 
         document.getElementById('topbarProjectName').textContent = projectInfo.code;
         document.getElementById('topbarProjectLevel').textContent = projectInfo.level;
+        document.getElementById('topbarProjectLeader').textContent = projectInfo.leader;
         document.getElementById('topbarCostMode').textContent = projectInfo.costMode === 'external' ? '委外' : '内部项目';
     }
 
@@ -4141,16 +4368,9 @@ function exportReport() {
 }
 
 // ============================================================================
-// 导出样车配置表
-// 按样车调整后的结果，输出每个样车（每台车一行）：
-//   - 序号
-//   - 项目设置中各系统项的全部内容（动力类型/驱动形式/电池包/前电机/...）
-//   - 试验项目（该样车参与的试验项目名称）
-//   - 样车类型（新车 / 借用）
-//   - 配置名称
-//   - 基础车型标识
-// 不通过试验项目穷举：横轴遍历配置，纵轴遍历样车调整表格的全部试验项目（collectAllTestNames）
-// 每个试验项目若调整后有 N 台新车则生成 N 行，M 台借用则追加 M 行（带借用标签）
+// 导出样车配置表及样车需求表
+// Sheet1「样车需求表」：每台样车一行（序号、各系统项、试验项目、样车类型、配置名称、基础车型）
+// Sheet2「样车配置表」：完全等于样车调整页矩阵（横轴配置，纵轴为基础车型/测试基线/各系统/全部试验项目/合计）
 // ============================================================================
 function exportSampleCarConfigTable() {
     if (selectedConfigs.length === 0) {
@@ -4158,81 +4378,193 @@ function exportSampleCarConfigTable() {
         return;
     }
 
-    // 固定的系统项顺序：动力类型/驱动形式在前，其他系统在后
+    const wb = XLSX.utils.book_new();
+
+    // ================= Sheet1：样车需求表（每台样车一行） =================
     const fixedSystems = vehicleSystems.filter(s => s.isFixed);
     const otherSystems = vehicleSystems.filter(s => !s.isFixed);
     const allSystems = [...fixedSystems, ...otherSystems];
-
-    // 收集全部试验项目（与样车调整表格纵轴一致）
     const sortedTestNames = collectAllTestNames();
 
-    // 表头
-    const header = ['序号'];
-    allSystems.forEach(sys => header.push(sys.label));
-    header.push('试验项目', '样车类型', '配置名称', '基础车型');
+    const header1 = ['序号'];
+    allSystems.forEach(sys => header1.push(sys.label));
+    header1.push('试验项目', '样车类型', '配置名称', '基础车型');
 
-    // 表体：遍历每个配置，再遍历每个试验项目，按数量生成行
-    const rows = [];
+    const rows1 = [];
     let serialNo = 0;
-
-    selectedConfigs.forEach((cfg, cfgIdx) => {
-        // 各系统项的显示值
+    selectedConfigs.forEach(cfg => {
         const sysValues = {};
         allSystems.forEach(sys => {
             const val = cfg.systems && cfg.systems[sys.key] ? cfg.systems[sys.key] : (sys.options[0] ? sys.options[0].value : '');
             const opt = sys.options.find(o => o.value === val);
             sysValues[sys.key] = opt ? opt.label : val;
         });
-
         const configName = cfg.name || '';
         const isBase = cfg.isBaseConfig === true ? '是' : '';
 
-        // 遍历全部试验项目，按调整后数量生成行
-        // 自动计算项（数据记录仪/物联卡）是配套设备而非单独样车试验，不生成样车行
         sortedTestNames.forEach(testName => {
             if (AUTO_CALC_ITEMS.has(testName)) return;
-
             const baseline = getBaselineQtyForConfig(cfg, testName);
             const adj = cfg.adjustments?.[testName] || { newChange: 0, borrowChange: 0 };
             const finalNew = Math.max(0, baseline.baseNew + (adj.newChange || 0));
             const finalBorrow = Math.max(0, baseline.baseBorrow + (adj.borrowChange || 0));
-
-            // 新车行
             for (let i = 0; i < finalNew; i++) {
                 serialNo++;
                 const row = [serialNo];
                 allSystems.forEach(sys => row.push(sysValues[sys.key]));
                 row.push(testName, '新车', configName, isBase);
-                rows.push(row);
+                rows1.push(row);
             }
-            // 借用行
             for (let i = 0; i < finalBorrow; i++) {
                 serialNo++;
                 const row = [serialNo];
                 allSystems.forEach(sys => row.push(sysValues[sys.key]));
                 row.push(testName, '借用', configName, isBase);
-                rows.push(row);
+                rows1.push(row);
             }
         });
     });
 
-    // 构建工作表
-    const aoa = [header, ...rows];
-    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    const ws1 = XLSX.utils.aoa_to_sheet([header1, ...rows1]);
+    const colWidths1 = [{ wch: 6 }];
+    allSystems.forEach(() => colWidths1.push({ wch: 14 }));
+    colWidths1.push({ wch: 24 }, { wch: 8 }, { wch: 22 }, { wch: 8 });
+    ws1['!cols'] = colWidths1;
+    XLSX.utils.book_append_sheet(wb, ws1, '样车需求表');
 
-    // 列宽：序号较窄，系统项适中，试验项目较宽
-    const colWidths = [{ wch: 6 }];
-    allSystems.forEach(() => colWidths.push({ wch: 14 }));
-    colWidths.push({ wch: 24 }, { wch: 8 }, { wch: 22 }, { wch: 8 });
-    ws['!cols'] = colWidths;
+    // ================= Sheet2：样车配置表（样车调整页矩阵结构） =================
+    // 表头：第一列"样车配置" + 每个配置一列 + 单价列 + 总价列
+    const header2 = ['样车配置'];
+    selectedConfigs.forEach(cfg => {
+        const prefix = cfg.isBaseConfig ? '[基础] ' : '';
+        header2.push(prefix + (cfg.name || ''));
+    });
+    header2.push('单价', '总价');
+    const aoa2 = [header2];
 
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, '样车配置表');
+    // --- 基础车型行（单选结果：是/空） ---
+    const baseRow = ['基础车型'];
+    selectedConfigs.forEach(cfg => baseRow.push(cfg.isBaseConfig ? '是' : ''));
+    baseRow.push('', '');  // 单价、总价列空
+    aoa2.push(baseRow);
 
-    const fileName = `${projectInfo.code}-样车配置表.xlsx`;
+    // --- 测试基线行（选中的基线显示名 + 概要：新X/借Y/Z万） ---
+    const blRow = ['测试基线'];
+    selectedConfigs.forEach(cfg => {
+        const items = buildConfigBaselineItems(cfg);
+        const selIdx = items.findIndex(it => it.selected === true);
+        const selItem = selIdx >= 0 ? items[selIdx] : null;
+        if (selItem) {
+            const label = formatBaselineDisplayLabel(selItem);
+            const summary = summarizeTests(getTestsForItem(selItem));
+            const typeTag = selItem._kind === 'custom' ? '[配置变更]' : '[单一变量]';
+            blRow.push(`${typeTag} ${label} | 新${summary.baseNew} 借${summary.baseBorrow} ${summary.estCost.toFixed(1)}万`);
+        } else {
+            blRow.push('未选');
+        }
+    });
+    blRow.push('', '');  // 单价、总价列空
+    aoa2.push(blRow);
+
+    // --- 各系统行（动力类型、驱动形式、电池包、前电机...全部系统） ---
+    allSystems.forEach(sys => {
+        const sysRow = [sys.label];
+        selectedConfigs.forEach(cfg => {
+            const val = cfg.systems && cfg.systems[sys.key] ? cfg.systems[sys.key] : (sys.options[0] ? sys.options[0].value : '');
+            const opt = sys.options.find(o => o.value === val);
+            sysRow.push(opt ? opt.label : val);
+        });
+        sysRow.push('', '');  // 单价、总价列空
+        aoa2.push(sysRow);
+    });
+
+    // --- 分隔行：试验项目（新车 / 借用） ---
+    const sepRow = ['试验项目（新车 / 借用）'];
+    selectedConfigs.forEach(() => sepRow.push(''));
+    sepRow.push('', '');
+    aoa2.push(sepRow);
+
+    // --- 试验项目行（全部试验项目，含数据记录仪/物联卡，每个配置列显示"新车数/借用数"） ---
+    // 收集 ALL 试验项目（TEST_PRICES 的 key，按 TEST_ITEM_ORDER 顺序），样车调整页隐藏的 AUTO_CALC_ITEMS 也要导出
+    const allTestOrdered = (TEST_ITEM_ORDER || []).filter(n => TEST_PRICES[n]);
+    Object.keys(TEST_PRICES).forEach(n => { if (!allTestOrdered.includes(n)) allTestOrdered.push(n); });
+
+    const configSums = selectedConfigs.map(() => ({ newCount: 0, borrowCount: 0, cost: 0 }));
+    let grandTotalCost = 0;  // 所有配置所有试验项目的费用总和
+
+    allTestOrdered.forEach(testName => {
+        const isAuto = AUTO_CALC_ITEMS.has(testName);
+        const testRow = [testName + (isAuto ? ' (自动计算)' : '')];
+        let testTotalQty = 0;  // 该试验项目所有配置的新车+借用总数
+        selectedConfigs.forEach((cfg, cfgIdx) => {
+            let finalNew, finalBorrow;
+            if (isAuto) {
+                const td = getConfigTestQuantities(cfg)[testName];
+                finalNew = td ? td.finalNew : 0;
+                finalBorrow = 0;
+            } else {
+                const baseline = getBaselineQtyForConfig(cfg, testName);
+                const adj = cfg.adjustments?.[testName] || { newChange: 0, borrowChange: 0 };
+                finalNew = Math.max(0, baseline.baseNew + (adj.newChange || 0));
+                finalBorrow = Math.max(0, baseline.baseBorrow + (adj.borrowChange || 0));
+            }
+            // 累加汇总
+            if (!isAuto) {
+                configSums[cfgIdx].newCount += finalNew;
+                configSums[cfgIdx].borrowCount += finalBorrow;
+            }
+            if (TEST_PRICES[testName]) {
+                const price = getTestPrice(testName);
+                const multiplier = TEST_PRICES[testName].multiplier || 1;
+                configSums[cfgIdx].cost += (finalNew + finalBorrow) * price * multiplier;
+            }
+            testTotalQty += finalNew + finalBorrow;
+            testRow.push(`${finalNew} / ${finalBorrow}`);
+        });
+        // --- 单价列：清楚展示单价计算（如"1.5*5.4万元/台=8.1万元/台"） ---
+        // --- 总价列：所有配置新车+借用之和 × 单价 ---
+        if (TEST_PRICES[testName]) {
+            const price = getTestPrice(testName);
+            const multiplier = TEST_PRICES[testName].multiplier || 1;
+            const unitPrice = multiplier * price;
+            // 单价格式：multiplier≠1 时展示计算过程，=1 时直接显示单价
+            if (multiplier !== 1) {
+                testRow.push(`${multiplier}*${price}万元/台=${unitPrice.toFixed(2)}万元/台`);
+            } else {
+                testRow.push(`${price}万元/台`);
+            }
+            // 总价格式：总台数 × 单台单价 = 总费用
+            const totalCost = testTotalQty * unitPrice;
+            testRow.push(`${testTotalQty}×${unitPrice.toFixed(2)}万元/台=${totalCost.toFixed(2)}万元`);
+        } else {
+            testRow.push('', '');
+        }
+        aoa2.push(testRow);
+    });
+
+    // --- 合计行（新车 X / 借用 Y / 费用 Z万） ---
+    const sumRow = ['合计'];
+    configSums.forEach(sum => {
+        sumRow.push(`新车${sum.newCount} / 借用${sum.borrowCount} | ${sum.cost.toFixed(2)}万元`);
+        grandTotalCost += sum.cost;
+    });
+    sumRow.push('', `合计：${grandTotalCost.toFixed(2)}万元`);
+    aoa2.push(sumRow);
+
+    const ws2 = XLSX.utils.aoa_to_sheet(aoa2);
+    // 列宽：第一列宽，配置列适中，单价/总价列宽
+    const colWidths2 = [{ wch: 26 }];
+    selectedConfigs.forEach(() => colWidths2.push({ wch: 32 }));
+    colWidths2.push({ wch: 28 }, { wch: 30 });  // 单价列、总价列
+    ws2['!cols'] = colWidths2;
+    // 冻结首行首列（第一行表头、第一列样车配置名）
+    ws2['!freeze'] = { xSplit: 1, ySplit: 1 };
+    XLSX.utils.book_append_sheet(wb, ws2, '样车配置表');
+
+    const fileName = `${projectInfo.code}-样车配置表及样车需求表.xlsx`;
     XLSX.writeFile(wb, fileName);
 
-    showToast('success', '样车配置表导出成功', `${fileName} 已下载（${rows.length} 台样车）`);
+    showToast('success', '导出成功', `${fileName} 已下载（样车需求表 ${rows1.length} 台样车 + 样车配置表 ${selectedConfigs.length} 个配置）`);
 }
 
 document.addEventListener('DOMContentLoaded', init);
