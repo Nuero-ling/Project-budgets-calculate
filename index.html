@@ -1445,12 +1445,12 @@ const BASELINE_LIBRARY = {
 //   用户单选其中一条后，保存到配置的 items 中，后续费用/样车调整/导出均
 //   以被选中的那条基线为准。
 //
-// 注意：'EVR四驱（主测车型基线）' 同时作为 A 类项目自动创建基础车型时的
+// 注意：'基础车型' 同时作为 A 类项目自动创建基础车型时的
 //       默认基线来源（由 autoCreateBaseConfig 读取），修改此条会同步影响
 //       基础车型与配置完善中的同名基线，确保两处一致。
 // ============================================================================
 const BASE_CONFIG_CHANGE = {
-  'EVR四驱（主测车型基线）': {
+  '基础车型': {
     '强化耐久试验': '8',
     '综合可靠性试验': '8',
     '动力传动耐久试验': '1',
@@ -1785,7 +1785,7 @@ const TEST_PRICES = {
         unit: '万/台', multiplier: 1,
     },
 
-    // ===== 台架试验 - 高低温整车4通 =====
+    // ===== 台架试验 - 高低温整车4通道 =====
     '高低温四通道试验':{
         subject: '高低温整车4通道',
         alias: '试验',
@@ -1793,7 +1793,7 @@ const TEST_PRICES = {
         unit: '万/台', multiplier: 1,
     },
     '高低温4通道载荷谱':{
-        subject: '高低温整车4通',
+        subject: '高低温整车4通道',
         alias: '载荷谱采集费用',
         price: 10,   priceExternal: 11.5,
         unit: '万/台', multiplier: 1,
@@ -2414,7 +2414,7 @@ function deriveItemsFromSystems(config) {
 // 并"按需"把基础车型（isBaseConfig=true）当前选中的基线，
 // 作为一条"当前主测在用基线（固定可选）"再追加进去——只在它的试验项目
 // 内容与已有任何一条基线都不同时才追加，避免与 BASE_CONFIG_CHANGE 中
-// 已存在的"EVR四驱（主测车型基线）"等静态基线重复显示。
+// 已存在的"基础车型"等静态基线重复显示。
 // 每条配置变更基线表示为一条特殊 item：
 //   _kind  = 'custom'
 //   system = 基线名（显示用）
@@ -2511,7 +2511,7 @@ function summarizeTests(tests) {
 // 公共函数：格式化基线的显示标签
 // - 单一变量基线（auto）：显示为"选项标签-系统标签"（如"73度-电池包"），
 //   多个源系统用"/"拼接（如"JK/HW-前电机/后电机"）
-// - 配置变更基线（custom）：显示 system 字段（如"EVR四驱（主测车型基线）"）
+// - 配置变更基线（custom）：显示 system 字段（如"基础车型"）
 function formatBaselineDisplayLabel(item) {
     if (!item) return '';
     if (item._kind === 'custom') {
@@ -2638,7 +2638,7 @@ function handleProjectLevelChange(oldLevel, newLevel) {
 // BASE_CONFIG_CHANGE 出现在"编辑配置 → 测试基线"的可选列表里，用户需要时
 // 再用"新增配置"自行创建衍生配置并切换到对应基线。
 // 基线来源:
-//   - 主测车型（EVR四驱）默认使用 BASE_CONFIG_CHANGE['EVR四驱（主测车型基线）']
+//   - 主测车型（EVR四驱）默认使用 BASE_CONFIG_CHANGE['基础车型']
 //     修改该条基线会同步影响基础车型与配置完善中的同名基线，确保两处一致。
 function autoCreateBaseConfig() {
     const existingBase = selectedConfigs.find(c => c.isBaseConfig);
@@ -2648,7 +2648,7 @@ function autoCreateBaseConfig() {
     }
 
     // 主测车型基线统一从 BASE_CONFIG_CHANGE 读取，避免双份维护
-    const BASE_CONFIG_KEY = 'EVR四驱（主测车型基线）';
+    const BASE_CONFIG_KEY = '基础车型';
     const system = BASE_CONFIG_KEY;
     const devType = '自定义';
     const explicitTests = BASE_CONFIG_CHANGE[BASE_CONFIG_KEY] || {};
@@ -4492,7 +4492,7 @@ function buildSubjectTestData(config) {
     return { subjectTestData, configTotal };
 }
 
-// 根据聚合数据生成"二级科目|四级科目|预算明细"行（返回行数组 + 该部分合计）
+// 根据聚合数据生成"二级科目|四级科目|科目合计|预算明细"行（返回行数组 + 该部分合计）
 function buildDetailRows(subjectTestData) {
     const rows = [];
     let grandTotal = 0;
@@ -4503,7 +4503,7 @@ function buildDetailRows(subjectTestData) {
             const testNames = Object.keys(testDataMap);
 
             if (testNames.length === 0) {
-                rows.push([group.name, subject, '']);
+                rows.push([group.name, subject, '', '']);
                 return;
             }
 
@@ -4514,15 +4514,17 @@ function buildDetailRows(subjectTestData) {
             });
 
             const details = [];
+            let subjectTotal = 0;
             sortedTestNames.forEach((testName, idx) => {
                 const data = testDataMap[testName];
                 const price = getTestPrice(testName);
                 const formula = formatTestFormula(testName, data.totalNew, price);
                 details.push(`${idx + 1}、${formula}=${formatAmount(data.totalAmount)}万元；`);
+                subjectTotal += data.totalAmount;
                 grandTotal += data.totalAmount;
             });
 
-            rows.push([group.name, subject, details.join('\n')]);
+            rows.push([group.name, subject, formatAmount(subjectTotal), details.join('\n')]);
         });
     });
 
@@ -4541,15 +4543,17 @@ function buildDetailRows(subjectTestData) {
         });
 
         const details = [];
+        let subjectTotal = 0;
         sortedTestNames.forEach((testName, idx) => {
             const data = testDataMap[testName];
             const price = getTestPrice(testName);
             const formula = formatTestFormula(testName, data.totalNew, price);
             details.push(`${idx + 1}、${formula}=${formatAmount(data.totalAmount)}万元；`);
+            subjectTotal += data.totalAmount;
             grandTotal += data.totalAmount;
         });
 
-        rows.push([SUBJECT_PARENT[subject] || '', subject, details.join('\n')]);
+        rows.push([SUBJECT_PARENT[subject] || '', subject, formatAmount(subjectTotal), details.join('\n')]);
     });
 
     return { rows, grandTotal };
@@ -4562,7 +4566,7 @@ function safeSheetName(name) {
 
 function exportReport() {
     const wb = XLSX.utils.book_new();
-    const COL_WIDTHS = [{ wch: 20 }, { wch: 35 }, { wch: 100 }];
+    const COL_WIDTHS = [{ wch: 20 }, { wch: 35 }, { wch: 15 }, { wch: 100 }];
 
     // ================================================================
     // Sheet 1: 配置汇总（项目基本信息 + 各配置金额）
@@ -4603,14 +4607,14 @@ function exportReport() {
         const { rows, grandTotal: rowsTotal } = buildDetailRows(subjectTestData);
 
         const cfgData = [];
-        cfgData.push(['配置名称', `${config.name} (${config.code})`, '']);
-        cfgData.push(['配置状态', config.completed ? '已完善' : '待完善', '']);
-        cfgData.push(['配置金额', configTotal.toFixed(2) + ' 万元', '']);
-        cfgData.push(['', '', '']);
-        cfgData.push(['二级科目', '四级科目', '预算明细']);
+        cfgData.push(['配置名称', `${config.name} (${config.code})`, '', '']);
+        cfgData.push(['配置状态', config.completed ? '已完善' : '待完善', '', '']);
+        cfgData.push(['配置金额', configTotal.toFixed(2) + ' 万元', '', '']);
+        cfgData.push(['', '', '', '']);
+        cfgData.push(['二级科目', '四级科目', '科目合计', '预算明细']);
         rows.forEach(r => cfgData.push(r));
-        cfgData.push(['', '', '']);
-        cfgData.push(['配置合计', '', formatAmount(rowsTotal) + '万元']);
+        cfgData.push(['', '', '', '']);
+        cfgData.push(['配置合计', '', '', formatAmount(rowsTotal)]);
 
         const wsCfg = XLSX.utils.aoa_to_sheet(cfgData);
         wsCfg['!cols'] = COL_WIDTHS;
@@ -4639,10 +4643,10 @@ function exportReport() {
     const { rows: totalRows, grandTotal: totalAmount } = buildDetailRows(mergedSubjectTestData);
 
     const totalData = [];
-    totalData.push(['二级科目', '四级科目', '预算明细']);
+    totalData.push(['二级科目', '四级科目', '科目合计', '预算明细']);
     totalRows.forEach(r => totalData.push(r));
-    totalData.push(['', '', '']);
-    totalData.push(['总计', '', formatAmount(totalAmount) + '万元']);
+    totalData.push(['', '', '', '']);
+    totalData.push(['总计', '', '', formatAmount(totalAmount)]);
 
     const wsTotal = XLSX.utils.aoa_to_sheet(totalData);
     wsTotal['!cols'] = COL_WIDTHS;
