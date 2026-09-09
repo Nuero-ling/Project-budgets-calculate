@@ -1475,7 +1475,6 @@ const BASE_CONFIG_CHANGE = {
     '房车拖挂可靠性试验': '2*',
     '行李架可靠性试验': '2*',
     '充气补胎试验': '1*',
-    '千斤顶刚性': '1*',
     '单轮垫高背门关闭试验': '1*',
     '雪侵入试验': '1*',
     '曲轴箱窜气通道冻结试验': '1*',
@@ -1645,19 +1644,19 @@ const TEST_PRICES = {
     '底盘误用工况':    {
         subject: '误用工况',
         alias: '底盘误用工况试验',
-        price: 10,   priceExternal: 11.5,
+        price: 10,   priceExternal: 10,
         unit: '万/台', multiplier: 1,
     },
     '动力传动误用试验':{
         subject: '误用工况',
         alias: '动力传动系统误用工况',
-        price: 10,   priceExternal: 11.5,
+        price: 0.5,   priceExternal: 4.2,
         unit: '万/台', multiplier: 1,
     },
     '悬架冲击':        {
         subject: '误用工况',
         alias: '悬架冲击试验',
-        price: 30,   priceExternal: 31.3,
+        price: 30,   priceExternal: 30.6,
         unit: '万/台', multiplier: 1,
     },
 
@@ -1665,13 +1664,13 @@ const TEST_PRICES = {
     '整车托底试验':    {
         subject: '电池包托底试验（底盘抗碰撞能力）',
         alias: '整车托底试验',
-        price: 15,   priceExternal: 17.25,
+        price: 10,   priceExternal: 10.4,
         unit: '万/台', multiplier: 1,
     },
     '整车刮底试验':    {
         subject: '电池包托底试验（底盘抗碰撞能力）',
         alias: '整车刮底试验',
-        price: 15,   priceExternal: 17.25,
+        price: 15,   priceExternal: 15.4,
         unit: '万/台', multiplier: 1,
     },
 
@@ -1679,7 +1678,7 @@ const TEST_PRICES = {
     '强化耐久试验':    {
         subject: '强化耐久可靠性',
         alias: '1.5万强化耐久',
-        price: 5.4,  priceExternal: 6.27,
+        price: 5.4,  priceExternal: 6.24,
         unit: '万公里', multiplier: 1.5,
     },
     '数据记录仪':      {
@@ -1691,7 +1690,7 @@ const TEST_PRICES = {
     '物联卡':          {
         subject: '强化耐久可靠性',
         alias: '物联卡',
-        price: 0.3,  priceExternal: 0.35,
+        price: 0.31,  priceExternal: 0.35,
         unit: '万/台', multiplier: 1,
     },
 
@@ -1699,8 +1698,8 @@ const TEST_PRICES = {
     '综合可靠性试验':  {
         subject: '综合工况可靠性',
         alias: '6万综合可靠性',
-        price: 28.5,  priceExternal: 32.5,
-        unit: '万/台', multiplier: 1,
+        price: 4.6,  priceExternal: 5.24,
+        unit: '万公里', multiplier: 6.2,
     },
     '动力传动耐久试验':{
         subject: '综合工况可靠性',
@@ -1711,7 +1710,7 @@ const TEST_PRICES = {
     '超高速试验':      {
         subject: '综合工况可靠性',
         alias: '超高速试验',
-        price: 4.6,  priceExternal: 5.3,
+        price: 3.45,  priceExternal: 7.67,
         unit: '万公里', multiplier: 0.5,
     },
 
@@ -1719,13 +1718,13 @@ const TEST_PRICES = {
     '长里程验证':      {
         subject: '社会道路可靠性',
         alias: '15万社会道路',
-        price: 32.4,  priceExternal: 46.9,
-        unit: '万/台', multiplier: 1,
+        price: 2.7,  priceExternal: 3.91,
+        unit: '万公里', multiplier: 15,
     },
     '轮胎磨耗试验':    {
         subject: '社会道路可靠性',
         alias: '4万公里轮胎磨耗',
-        price: 2.7,  priceExternal: 3.11,
+        price: 3.2,  priceExternal: 4.61,
         unit: '万公里', multiplier: 4,
     },
 
@@ -1733,13 +1732,13 @@ const TEST_PRICES = {
     '高温适应性':      {
         subject: '三高一湿适应性',
         alias: '高温适应性',
-        price: 8.1,  priceExternal: 9.32,
+        price: 8.1,  priceExternal: 8.39,
         unit: '万/台', multiplier: 1,
     },
     '高原适应性':      {
         subject: '三高一湿适应性',
         alias: '高原适应性',
-        price: 7.7,  priceExternal: 8.86,
+        price: 7.7,  priceExternal: 8.39,
         unit: '万/台', multiplier: 1,
     },
     '高寒适应性':      {
@@ -1751,7 +1750,7 @@ const TEST_PRICES = {
     '高温高湿适应性':  {
         subject: '三高一湿适应性',
         alias: '高温高湿适应性',
-        price: 7.05, priceExternal: 8.11,
+        price: 7.1, priceExternal: 8.59,
         unit: '万/台', multiplier: 1,
     },
 
@@ -1759,7 +1758,7 @@ const TEST_PRICES = {
     '强化腐蚀试验':    {
         subject: '强化腐蚀试验',
         alias: '强化腐蚀，100循环测试及拆解费',
-        price: 135,  priceExternal: 155.25,
+        price: 105,  priceExternal: 105.7,
         unit: '万/台', multiplier: 1,
     },
 
@@ -1767,7 +1766,7 @@ const TEST_PRICES = {
     '大气暴露试验':    {
         subject: '大气暴露试验',
         alias: '大气暴露',
-        price: 35,   priceExternal: 40.25,
+        price: 40,   priceExternal: 41.8,
         unit: '万/台', multiplier: 1,
     },
 
@@ -1775,7 +1774,7 @@ const TEST_PRICES = {
     '常温四通道试验':  {
         subject: '常温4通道',
         alias: '试验',
-        price: 65,   priceExternal: 74.75,
+        price: 21,   priceExternal: 44.1,
         unit: '万/台', multiplier: 1,
     },
     '常温4通道载荷谱': {
@@ -1789,7 +1788,7 @@ const TEST_PRICES = {
     '高低温四通道试验':{
         subject: '高低温整车4通道',
         alias: '试验',
-        price: 65,   priceExternal: 74.75,
+        price: 81,   priceExternal: 85.1,
         unit: '万/台', multiplier: 1,
     },
     '高低温4通道载荷谱':{
@@ -1803,18 +1802,9 @@ const TEST_PRICES = {
     '24通道测试':      {
         subject: '整车24通道',
         alias: '整车24通道台架试验',
-        price: 160,  priceExternal: 184,
+        price: 146,  priceExternal: 173.2,
         unit: '万/台', multiplier: 1,
     },
-
-    // ===== 台架试验 - 整车12通道 =====
-    '环境仓开闭耐久':  {
-        subject: '整车12通道',
-        alias: '环境仓开闭耐久',
-        price: 40,   priceExternal: 46,
-        unit: '万/台', multiplier: 1,
-    },
-
 
     // ===== 可靠性试验 - 三高一湿适应性（新增） =====
     '全国适应性试验15万km': {
@@ -1858,7 +1848,7 @@ const TEST_PRICES = {
     '千斤顶刚性试验': {
         subject: '强化耐久可靠性',
         alias: '千斤顶刚性试验',
-        price: 8.1,  priceExternal: 11,
+        price: 0,  priceExternal: 0.2,
         unit: '万/台', multiplier: 1,
     },
     '拖车钩强度试验': {
@@ -1870,8 +1860,8 @@ const TEST_PRICES = {
     '房车拖挂可靠性试验': {
         subject: '强化耐久可靠性',
         alias: '房车拖挂可靠性试验',
-        price: 5.5,  priceExternal: 7,
-        unit: '万公里', multiplier: 1.5,
+        price: 13.25,  priceExternal: 21.86,
+        unit: '万/台', multiplier: 1,
     },
     '行李架可靠性试验': {
         subject: '强化耐久可靠性',
@@ -1937,12 +1927,6 @@ const TEST_PRICES = {
     },
 
     // ===== 可靠性试验 - 强化腐蚀试验（新增） =====
-    '千斤顶刚性': {
-        subject: '强化腐蚀试验',
-        alias: '千斤顶刚性',
-        price: 0,    priceExternal: 0.2,
-        unit: '万/台', multiplier: 1,
-    },
     '白车身(涂装)盐雾试验': {
         subject: '强化腐蚀试验',
         alias: '白车身(涂装)盐雾试验',
@@ -2071,48 +2055,65 @@ function formatAmount(amount) {
 const TEST_ITEM_ORDER = [
     // 可靠性 - 强化耐久可靠性
     '强化耐久试验',
-    '千斤顶刚性试验',
-    '拖车钩强度试验',
-    '房车拖挂可靠性试验',
-    '行李架可靠性试验',
-    '数据记录仪',
-    '物联卡',
-
-    // 可靠性 - 综合工况可靠性
-    '综合可靠性试验',
-    '动力传动耐久试验',
-    '超高速试验',
-
-    // 可靠性 - 社会道路可靠性
-    '长里程验证',
-    '轮胎磨耗试验',
-
-    // 可靠性 - 三高一湿适应性
-    '全国适应性试验15万km',
+	'综合可靠性试验',
+	'超高速试验',
+	'动力传动耐久试验',
+	'轮胎磨耗试验',
+	'长里程验证',
+	'全国适应性试验15万km',
     '全国适应性试验25万km',
     '高温适应性',
     '高原适应性',
     '高寒适应性',
     '高温高湿适应性',
-    '防滑链接触试验',
+	// 台架 - 四驱转鼓耐久台架
+    '高温转毂试验',
+    '低温转毂试验',
+	'强化腐蚀试验',
+	'大气暴露试验',
+	'24通道测试',
+    '载荷谱采集（应变、加速度类）',
+    '载荷谱采集（六分力类）',
+	// 台架 - 常温4通道
+    '常温四通道试验',
+    '常温4通道载荷谱',
+	'高低温四通道试验',
+    '高低温4通道载荷谱',
+    '超高速试验',
+	// 可靠性 - 电池包托底试验
+    '底盘误用工况',
+	'动力传动误用试验',
+	'整车托底试验',
+    '整车刮底试验',
+	'泼水误用试验',
+    '操作误用试验',
+	'拖车钩强度试验',
+    '房车拖挂可靠性试验',
+	// 台架 - 整车12通道
+    '环境仓开闭耐久',
+    '6自由度试验',
+    '常温四门两盖试验',
+    '高低温四门两盖试验',
+    '雨刮耐久试验',
+	
+	'防滑链接触试验',
     '雪侵入试验',
     '曲轴箱窜气通道冻结试验',
     '扬尘试验',
-
+    '千斤顶刚性试验',
+    
+    '行李架可靠性试验',
+    '数据记录仪',
+    '物联卡',
+    // 可靠性 - 综合工况可靠性
+    // 可靠性 - 社会道路可靠性
+    // 可靠性 - 三高一湿适应性
     // 可靠性 - 强化腐蚀试验
-    '强化腐蚀试验',
-    '千斤顶刚性',
     '白车身(涂装)盐雾试验',
-
     // 可靠性 - 大气暴露试验
-    '大气暴露试验',
-
     // 可靠性 - 误用工况
-    '底盘误用工况',
-    '动力传动误用试验',
+
     '悬架冲击',
-    '泼水误用试验',
-    '操作误用试验',
     '充气补胎试验',
     '单轮垫高背门关闭试验',
     '机油白浊试验',
@@ -2120,35 +2121,8 @@ const TEST_ITEM_ORDER = [
     '轮胎单体抗冲击试验',
     '交叉轴操作试验',
     '螺栓夹紧力试验',
-
-    // 可靠性 - 电池包托底试验
-    '整车托底试验',
-    '整车刮底试验',
-
-    // 台架 - 常温4通道
-    '常温四通道试验',
-    '常温4通道载荷谱',
-
     // 台架 - 高低温4通道
-    '高低温四通道试验',
-    '高低温4通道载荷谱',
-
     // 台架 - 整车24通道
-    '24通道测试',
-    '载荷谱采集（应变、加速度类）',
-    '载荷谱采集（六分力类）',
-
-    // 台架 - 整车12通道
-    '环境仓开闭耐久',
-    '6自由度试验',
-    '常温四门两盖试验',
-    '高低温四门两盖试验',
-    '雨刮耐久试验',
-
-    // 台架 - 四驱转鼓耐久台架
-    '高温转毂试验',
-    '低温转毂试验',
-
     // 专项试验（放在最末尾）
     '尘洞试验',
     '1/4悬架测试',
@@ -2278,16 +2252,6 @@ let vehicleSystems = [
         ]
     },
     {
-        key: 'brake',
-        label: '制动',
-        baselineSystem: '制动',
-        options: [
-            { value: 'iBooster2', label: 'iBooster 2.0', devType: null },
-            { value: 'iBooster3', label: 'iBooster 3.0', devType: null },
-            { value: 'IPB', label: 'IPB', devType: null }
-        ]
-    },
-    {
         key: 'steering',
         label: '转向',
         baselineSystem: '转向系统',
@@ -2338,16 +2302,6 @@ let vehicleSystems = [
         key: 'ads',
         label: 'ADS',
         baselineSystem: 'ADS',
-        options: [
-            { value: 'fullNew', label: '全新平台', devType: null },
-            { value: 'mature', label: '成熟平台首搭', devType: null },
-            { value: 'adapted', label: '已搭载适配开发', devType: null }
-        ]
-    },
-    {
-        key: 'cockpitCDC',
-        label: '座舱CDC',
-        baselineSystem: '座舱CDC',
         options: [
             { value: 'fullNew', label: '全新平台', devType: null },
             { value: 'mature', label: '成熟平台首搭', devType: null },
