@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>单一变量基线预算工具</title>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.0.0/dist/xlsx.bundle.js"></script>
 <style>
 :root {
   --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px;
@@ -657,14 +657,19 @@ table.tbl .center { text-align: center; }
     </div>
   </header>
   <div class="content">
+    <!-- 共享步骤导航：所有页面统一展示，点击任意项跳转 -->
+    <nav class="stepper" id="globalStepper">
+      <button class="step" data-step="settings" onclick="showPage('settings')"><span class="step-num">1</span><span><span class="step-title">项目设置</span></span></button>
+      <span class="step-sep"></span>
+      <button class="step" data-step="config" onclick="showPage('config')"><span class="step-num">2</span><span><span class="step-title">配置管理</span></span></button>
+      <span class="step-sep"></span>
+      <button class="step" data-step="adjust" onclick="showPage('adjust')"><span class="step-num">3</span><span><span class="step-title">样车调整</span><div class="step-desc">数量微调</div></span></button>
+      <span class="step-sep"></span>
+      <button class="step" data-step="report" onclick="showPage('report')"><span class="step-num">4</span><span><span class="step-title">报表分析</span></span></button>
+      <span class="step-sep"></span>
+      <button class="step" data-step="export" onclick="showPage('export')"><span class="step-num">5</span><span><span class="step-title">导出中心</span></span></button>
+    </nav>
     <section class="page active" id="page-config">
-      <nav class="stepper">
-        <button class="step active" data-step="config"><span class="step-num">1</span><span><span class="step-title">配置管理</span></span></button>
-        <span class="step-sep"></span>
-        <button class="step" data-step="adjust" onclick="showPage('adjust')"><span class="step-num">2</span><span><span class="step-title">样车调整</span><div class="step-desc">数量微调</div></span></button>
-        <span class="step-sep"></span>
-        <button class="step" data-step="report" onclick="showPage('report')"><span class="step-num">3</span><span><span class="step-title">报表分析</span></span></button>
-      </nav>
       <div class="page-header">
         <div><h1>配置管理</h1><p class="desc">管理整车配置，为每个配置指定测试基线策略。通过编辑抽屉选择一级系统和开发类型。</p></div>
         <div class="page-actions">
@@ -723,13 +728,6 @@ table.tbl .center { text-align: center; }
       </div>
     </section>
     <section class="page" id="page-adjust">
-      <nav class="stepper">
-        <button class="step done" data-step="config" onclick="showPage('config')"><span class="step-num">1</span><span><span class="step-title">配置管理</span></span></button>
-        <span class="step-sep done"></span>
-        <button class="step active" data-step="adjust"><span class="step-num">2</span><span><span class="step-title">样车调整</span><div class="step-desc">数量微调</div></span></button>
-        <span class="step-sep"></span>
-        <button class="step" data-step="report" onclick="showPage('report')"><span class="step-num">3</span><span><span class="step-title">报表分析</span></span></button>
-      </nav>
       <div class="page-header">
         <div>
           <h1>样车数量调整</h1>
@@ -763,13 +761,6 @@ table.tbl .center { text-align: center; }
       </div>
     </section>
     <section class="page" id="page-report">
-      <nav class="stepper">
-        <button class="step done" data-step="config" onclick="showPage('config')"><span class="step-num">1</span><span><span class="step-title">配置管理</span></span></button>
-        <span class="step-sep done"></span>
-        <button class="step done" data-step="adjust" onclick="showPage('adjust')"><span class="step-num">2</span><span><span class="step-title">样车调整</span><div class="step-desc">数量微调</div></span></button>
-        <span class="step-sep done"></span>
-        <button class="step active" data-step="report"><span class="step-num">3</span><span><span class="step-title">报表分析</span></span></button>
-      </nav>
       <div class="page-header"><div><h1>报表分析</h1><p class="desc">所有计算数据来自归一化测试基线与用户选择的配置。</p></div><div class="page-actions"><button class="btn primary" onclick="exportReport()">导出报表</button></div></div>
       <div class="kpi-grid">
         <div class="kpi"><div class="kpi-label">已选配置数</div><div class="kpi-value" id="reportKpiConfigs">0<span class="kpi-unit">项</span></div><div class="kpi-delta"><span class="chip ok">合计</span></div></div>
@@ -1697,6 +1688,13 @@ const TEST_PRICES = {
         price: 5.4,  priceExternal: 6.24,
         unit: '万公里', multiplier: 1.5,
     },
+    // 强化耐久可靠性（4.5万公里）：单价同强化耐久可靠性，倍率为4.5
+    '极限强化耐久(4.5万km)': {
+        subject: '强化耐久可靠性',
+        alias: '4.5万强化耐久',
+        price: 5.4,  priceExternal: 6.24,
+        unit: '万公里', multiplier: 4.5,
+    },
     '数据记录仪':      {
         subject: '强化耐久可靠性',
         alias: '数据记录仪',
@@ -1802,7 +1800,7 @@ const TEST_PRICES = {
     // ===== 台架试验 - 常温4通道 =====
     '常温四通道测试':  {
         subject: '常温4通道',
-        alias: '试验',
+        alias: '常温四通道台架试验',
         price: 21,   priceExternal: 44.1,
         unit: '万/台', multiplier: 1,
     },
@@ -1816,7 +1814,7 @@ const TEST_PRICES = {
     // ===== 台架试验 - 高低温整车4通道 =====
     '高低温四通道测试':{
         subject: '高低温整车4通道',
-        alias: '试验',
+        alias: '高低温四通道台架试验',
         price: 81,   priceExternal: 85.1,
         unit: '万/台', multiplier: 1,
     },
@@ -2095,6 +2093,7 @@ function formatAmount(amount) {
 const TEST_ITEM_ORDER = [
     // 可靠性 - 强化耐久可靠性
     '强化耐久可靠性',
+    '极限强化耐久(4.5万km)',
 	'综合可靠性',
 	'场内超高速测试',
 	'动力传动可靠性',
@@ -2494,14 +2493,23 @@ function summarizeTests(tests) {
     let baseNew = 0, baseBorrow = 0, estCost = 0;
     Object.entries(tests || {}).forEach(([testName, qty]) => {
         const q = parseQuantity(qty);
-        // 自动计算项（数据记录仪/物联卡）是配套设备，不计入新车/借用总数，但费用照常计算
+        // 自动计算项（数据记录仪/物联卡）是配套设备，不计入新车/借用总数
+        // 其费用由基线新车数量自动推导（见下方），不使用基线库中的值
         if (!AUTO_CALC_ITEMS.has(testName)) {
             baseNew += q.new;
             baseBorrow += q.borrow;
+            if (TEST_PRICES[testName]) {
+                // 费用 = (新车 + 借用) × 单价 × 倍率，借用虽不新造车但仍需参与试验
+                estCost += (q.new + q.borrow) * getTestPrice(testName) * getTestMultiplier(testName);
+            }
         }
+    });
+    // 物联卡/数采费用：基于基线新车数量自动计算 ceil(新车×0.8)，与表格底部合计保持一致
+    // 调整样车后此处仍保持基线值不变，表格底部合计会随调整后的新车数量变化
+    const autoQty = Math.ceil(baseNew * AUTO_CALC_RATIO);
+    AUTO_CALC_ITEMS.forEach(testName => {
         if (TEST_PRICES[testName]) {
-            // 费用 = (新车 + 借用) × 单价 × 倍率，借用虽不新造车但仍需参与试验
-            estCost += (q.new + q.borrow) * getTestPrice(testName) * getTestMultiplier(testName);
+            estCost += autoQty * getTestPrice(testName) * getTestMultiplier(testName);
         }
     });
     return { baseNew, baseBorrow, estCost };
@@ -2749,6 +2757,9 @@ function init() {
             }
         }, { passive: false });
     }
+
+    // 初始化共享步骤导航的 active/done 状态（默认进入配置管理页）
+    showPage('config');
 }
  
 // ============================================================================
@@ -3201,19 +3212,34 @@ function filterConfigs(searchText) {
     });
 }
  
+// 步骤导航的固定顺序，决定 done/active 状态的判定
+const STEP_ORDER = ['settings', 'config', 'adjust', 'report', 'export'];
+
 function showPage(pageId) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-    
+
     document.getElementById('page-' + pageId).classList.add('active');
-    
+
     const navItem = document.querySelector('.nav-item[onclick="showPage(\'' + pageId + '\')"]');
     if (navItem) navItem.classList.add('active');
-    
-    const stepItem = document.querySelector('.step[data-step="' + pageId + '"]');
-    if (stepItem) stepItem.classList.add('active');
-    
+
+    // 刷新共享 stepper 的 active/done 状态：
+    // 当前页之前的步骤标记为 done（绿色），当前页标记为 active，之后为默认
+    const curIdx = STEP_ORDER.indexOf(pageId);
+    document.querySelectorAll('#globalStepper .step').forEach(s => {
+        const idx = STEP_ORDER.indexOf(s.dataset.step);
+        s.classList.remove('active', 'done');
+        if (idx === curIdx) {
+            s.classList.add('active');
+        } else if (idx < curIdx && curIdx >= 0) {
+            s.classList.add('done');
+        }
+    });
+    document.querySelectorAll('#globalStepper .step-sep').forEach((sep, i) => {
+        sep.classList.toggle('done', i < curIdx);
+    });
+
     if (pageId === 'report') {
         updateReportKPIs();
         renderReportSummary();
@@ -3708,12 +3734,8 @@ function getConfigTestQuantities(config, opts) {
     const skipAutoOverride = !!(opts && opts.skipAutoOverride);
     const result = {};
  
-    // 确定要使用的基线 items：优先使用 config.items，若为空则用 buildConfigBaselineItems
-    // （含配置变更基线，与摘要 chip 和配置管理抽屉保持一致）
-    let items = config.items || [];
-    if (items.length === 0) {
-        items = buildConfigBaselineItems(config);
-    }
+    // 始终实时推导基线列表（含配置变更基线），与摘要 chip 和配置管理抽屉保持一致
+    const items = buildConfigBaselineItems(config);
  
     // 1. 聚合配置选中基线的数量（单选：只使用 selected === true 的基线）
     if (items.length > 0) {
@@ -3778,11 +3800,8 @@ function getBaselineQtyForConfig(config, testName) {
     if (AUTO_CALC_ITEMS.has(testName)) {
         return { baseNew: 0, baseBorrow: 0 };
     }
-    let items = config.items || [];
-    if (items.length === 0) {
-        // 回退时用 buildConfigBaselineItems（含配置变更基线），与摘要 chip 保持一致
-        items = buildConfigBaselineItems(config);
-    }
+    // 始终实时推导基线列表（含配置变更基线），与摘要 chip 保持一致
+    const items = buildConfigBaselineItems(config);
     let baseNew = 0;
     let baseBorrow = 0;
     items.forEach(item => {
@@ -3994,8 +4013,9 @@ function renderAdjustTable() {
         tfoot.innerHTML = footHtml;
     }
  
-    // 更新顶部KPI
-    updateAdjustKPIs();
+    // 用 updateAdjustFootAndKPIs 统一刷新表尾（含物联卡/数采费用）和顶部KPI
+    // 保证与摘要 chip 的计算路径完全一致（不调整时上下费用相等）
+    updateAdjustFootAndKPIs();
 }
  
 // 更新样车调整页面顶部KPI卡片
@@ -4618,6 +4638,64 @@ function buildDetailRows(subjectTestData) {
 }
  
 // Excel sheet 名安全化（去除非法字符 + 截断到31字符）
+// ============================================================================
+// Excel 导出样式（xlsx-js-style）
+// 通用样式函数：遍历 worksheet 所有单元格，按行号应用不同样式
+//   headerRows: 表头行（蓝底白字加粗居中）
+//   titleRows:  标题行（浅蓝底加粗居中）
+//   totalRows:  合计行（浅黄底加粗居中）
+//   其余行:     灰边框 + 垂直居中 + 自动换行，数值列水平居中
+// ============================================================================
+const _thinBorder = { style: 'thin', color: { rgb: 'BFBFBF' } };
+const _excelBorder = { top: _thinBorder, bottom: _thinBorder, left: _thinBorder, right: _thinBorder };
+const _excelBaseFont = { name: '微软雅黑', sz: 10 };
+
+function applyExcelStyle(ws, opts) {
+    opts = opts || {};
+    if (!ws || !ws['!ref']) return;
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    const headerSet = new Set(opts.headerRows || []);
+    const titleSet  = new Set(opts.titleRows  || []);
+    const totalSet  = new Set(opts.totalRows  || []);
+    const centerCols = new Set(opts.centerCols || []);
+
+    for (let r = range.s.r; r <= range.e.r; r++) {
+        for (let c = range.s.c; c <= range.e.c; c++) {
+            const addr = XLSX.utils.encode_cell({ r, c });
+            if (!ws[addr]) ws[addr] = { t: 's', v: '' };
+            const cell = ws[addr];
+            const val = cell.v;
+
+            let s = {
+                font: _excelBaseFont,
+                alignment: { vertical: 'center', wrapText: true, horizontal: 'left' },
+                border: _excelBorder
+            };
+
+            if (headerSet.has(r)) {
+                s.font = { name: '微软雅黑', sz: 10, bold: true, color: { rgb: 'FFFFFF' } };
+                s.alignment = { vertical: 'center', horizontal: 'center', wrapText: true };
+                s.fill = { fgColor: { rgb: '4472C4' } };
+            } else if (titleSet.has(r)) {
+                s.font = { name: '微软雅黑', sz: 11, bold: true };
+                s.alignment = { vertical: 'center', horizontal: 'center', wrapText: true };
+                s.fill = { fgColor: { rgb: 'D9E1F2' } };
+            } else if (totalSet.has(r)) {
+                s.font = { name: '微软雅黑', sz: 10, bold: true };
+                s.alignment = { vertical: 'center', horizontal: 'center', wrapText: true };
+                s.fill = { fgColor: { rgb: 'FFF2CC' } };
+            } else if (typeof val === 'number' || (typeof val === 'string' && /^\d+\.?\d*$/.test(val) && val !== '')) {
+                s.alignment = { vertical: 'center', horizontal: 'center', wrapText: true };
+            } else if (centerCols.has(c)) {
+                s.alignment = { vertical: 'center', horizontal: 'center', wrapText: true };
+            }
+
+            cell.s = s;
+        }
+    }
+    // 不设置固定行高，让 Excel 根据 wrapText 自动适应行高
+}
+
 function safeSheetName(name) {
     return name.replace(/[\\\/\?\*\[\]:]/g, '').substring(0, 31);
 }
@@ -4655,6 +4733,12 @@ function exportReport() {
  
     const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
     wsSummary['!cols'] = COL_WIDTHS;
+    applyExcelStyle(wsSummary, {
+        headerRows: [8],
+        titleRows: [0, 7],
+        totalRows: [summaryData.length - 1],
+        centerCols: [0, 2]
+    });
     XLSX.utils.book_append_sheet(wb, wsSummary, '配置汇总');
  
     // ================================================================
@@ -4676,6 +4760,11 @@ function exportReport() {
  
         const wsCfg = XLSX.utils.aoa_to_sheet(cfgData);
         wsCfg['!cols'] = COL_WIDTHS;
+        applyExcelStyle(wsCfg, {
+            headerRows: [4],
+            totalRows: [cfgData.length - 1],
+            centerCols: [0, 2]
+        });
         const sheetName = safeSheetName(`${idx + 1}-${config.name}`);
         XLSX.utils.book_append_sheet(wb, wsCfg, sheetName);
     });
@@ -4708,6 +4797,11 @@ function exportReport() {
  
     const wsTotal = XLSX.utils.aoa_to_sheet(totalData);
     wsTotal['!cols'] = COL_WIDTHS;
+    applyExcelStyle(wsTotal, {
+        headerRows: [0],
+        totalRows: [totalData.length - 1],
+        centerCols: [0, 2]
+    });
     XLSX.utils.book_append_sheet(wb, wsTotal, '总费用明细');
  
     const fileName = `${projectInfo.code}-预算费用明细.xlsx`;
@@ -4780,6 +4874,10 @@ function exportSampleCarConfigTable() {
     allSystems.forEach(() => colWidths1.push({ wch: 14 }));
     colWidths1.push({ wch: 24 }, { wch: 8 }, { wch: 22 }, { wch: 8 });
     ws1['!cols'] = colWidths1;
+    applyExcelStyle(ws1, {
+        headerRows: [0],
+        centerCols: [0]
+    });
     XLSX.utils.book_append_sheet(wb, ws1, '样车需求表');
  
     // ================= Sheet2：样车配置表（样车调整页矩阵结构） =================
@@ -4909,6 +5007,10 @@ function exportSampleCarConfigTable() {
     ws2['!cols'] = colWidths2;
     // 冻结首行首列（第一行表头、第一列样车配置名）
     ws2['!freeze'] = { xSplit: 1, ySplit: 1 };
+    applyExcelStyle(ws2, {
+        headerRows: [0],
+        centerCols: []
+    });
     XLSX.utils.book_append_sheet(wb, ws2, '样车配置表');
  
     const fileName = `${projectInfo.code}-样车配置表及样车需求表.xlsx`;
