@@ -196,6 +196,17 @@ a:hover { text-decoration: underline; }
 .kpi-delta { font-size: var(--fs-sm); color: var(--text-muted); margin-top: var(--s-3); }
  
 .table-wrap { overflow: auto; }
+
+/* 样车调整表格：容器自身纵向滚动，使表头（样车配置行）冻结生效
+   说明：thead th 的 position:sticky 全局已有，但外层 wrap 仅横向滚动时
+   sticky 失效；给 wrap 限制 max-height 并纵向滚动后，表头冻结恢复生效 */
+#adjustTableWrap {
+  max-height: calc(100vh - 340px);
+  min-height: 320px;
+}
+#adjustTable thead th { z-index: 5; box-shadow: inset 0 -1px 0 var(--border); }
+/* 左上角单元格：同时固定首列与表头，层级需高于表头行和首列 */
+#adjustTable thead th:first-child { left: 0; z-index: 6; }
 table.tbl { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--fs-md); font-variant-numeric: tabular-nums; }
 table.tbl thead th {
   background: var(--surface-2); font-weight: 600; color: var(--text);
@@ -757,6 +768,16 @@ table.tbl .center { text-align: center; }
               <tfoot id="adjustTableFoot"></tfoot>
             </table>
           </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>备注说明</h3></div>
+        <div class="card-body">
+          <ol style="margin:0;padding-left:20px;font-size:13px;line-height:1.9;color:var(--text)">
+            <li>螺栓夹紧力计费为3.2万元/轮（按每轮4台次，每台次150个标件）</li>
+            <li>为了方便计算费用，行李架可靠性以独立样车体现，不以借用体现</li>
+            <li>为了方便计算费用，房车拖挂以独立样车体现，不以借用体现</li>
+          </ol>
         </div>
       </div>
     </section>
@@ -2083,6 +2104,28 @@ function formatAmount(amount) {
     const v = Math.round(amount * 100) / 100;
     return String(v);
 }
+
+// 单价单元格内容：按TEST_PRICES.unit区分单位显示（初始渲染与局部刷新共用，避免格式漂移）
+// 万公里类：multiplier万公里 × price元/公里 = unitPrice万元/台；万/台类：price万元/台
+function formatPriceCellContent(testName) {
+    const info = TEST_PRICES[testName];
+    if (!info) return '';
+    const price = getTestPrice(testName);
+    const multiplier = getTestMultiplier(testName);
+    const unitPrice = multiplier * price;
+    if (info.unit === '万公里') {
+        if (multiplier !== 0) {
+            return `${multiplier}万公里×${price}元/公里=<br><b style="color:var(--accent-hover)">${unitPrice.toFixed(2)}万元/台</b>`;
+        }
+        return `${price}元/公里`;
+    }
+    return `${price}万元/台`;
+}
+
+// 总价单元格内容：简洁格式（初始渲染与局部刷新共用）
+function formatTotalCellContent(testTotalQty, unitPrice, testTotalCost) {
+    return `${testTotalQty}×${unitPrice.toFixed(2)}=<br>${testTotalCost.toFixed(2)}万元`;
+}
  
 // ============================================================================
 // 试验项目排序 (TEST_ITEM_ORDER)
@@ -2120,7 +2163,6 @@ const TEST_ITEM_ORDER = [
     '常温四通道载荷谱',
 	'高低温四通道测试',
     '高低温四通道载荷谱采集',
-    '场内超高速测试',
 	// 可靠性 - 电池包托底试验
     '底盘误用测试',
 	'动力传动误用测试',
@@ -2481,11 +2523,22 @@ function appendChangeBaselines(items) {
 // - custom 基线：直接返回 item._tests
 function getTestsForItem(item) {
     if (!item) return {};
+    // 已删除的试验项目（样车调整页面删除）从所有基线数据中排除，
+    // 此处为单点过滤：摘要chip、数量汇总、费用计算、报表、导出全链路自动生效
+    const deleted = projectInfo.deletedTests || [];
+    const pickTests = (tests) => {
+        if (deleted.length === 0) return tests;
+        const out = {};
+        Object.keys(tests).forEach(name => {
+            if (!deleted.includes(name)) out[name] = tests[name];
+        });
+        return out;
+    };
     if (item._kind === 'custom') {
-        return item._tests || {};
+        return pickTests(item._tests || {});
     }
     const key = `${item.system}|||${item.devType}`;
-    return BASELINE_DATA.data[key] || {};
+    return pickTests(BASELINE_DATA.data[key] || {});
 }
  
 // 计算任意 tests 对象（试验项目=>数量字符串）的新车/借用/费用汇总
@@ -2574,7 +2627,8 @@ const projectInfo = {
     sop: '2027-12-31',
     leader: '演示用户',
     costMode: 'internal',   // 'internal' = 内部项目（取 price）；'external' = 委外（取 priceExternal）
-    customMileage: 0         // 长里程可靠性（自定义）的里程值（万公里），由样车调整页面输入
+    customMileage: 0,        // 长里程可靠性（自定义）的里程值（万公里），由样车调整页面输入
+    deletedTests: []         // 已删除的试验项目列表（样车调整页面删除的项目，可随时在底部重新添加）
 };
  
 function updateProjectInfo() {
@@ -3839,8 +3893,12 @@ function collectAllTestNames() {
             }
         });
     });
-    return TEST_ITEM_ORDER.filter(n => allTestNames.has(n))
+    const ordered = TEST_ITEM_ORDER.filter(n => allTestNames.has(n))
         .concat(Array.from(allTestNames).filter(n => !TEST_ITEM_ORDER.includes(n)).sort());
+    // 过滤已被用户删除的试验项目（样车调整表格行、总价刷新、样车配置表导出自动排除）
+    const deleted = projectInfo.deletedTests || [];
+    if (deleted.length === 0) return ordered;
+    return ordered.filter(n => !deleted.includes(n));
 }
  
 // 样车调整页面：渲染调整表格（横轴=配置，纵轴=试验项目）
@@ -3859,7 +3917,7 @@ function renderAdjustTable() {
     }
  
     // 表头：样车配置（上半部为系统项、下半部为试验项目）+ 每个配置一列
-    let headHtml = '<th style="position:sticky;left:0;z-index:2;background:var(--bg-elevated);min-width:120px">样车配置</th>';
+    let headHtml = '<th style="position:sticky;left:0;top:0;z-index:6;background:var(--surface-2);min-width:120px">样车配置</th>';
     selectedConfigs.forEach((cfg, idx) => {
         const isBase = cfg.isBaseConfig ? '<span class="chip ok" style="font-size:10px">基础</span> ' : '';
         headHtml += `
@@ -3871,6 +3929,7 @@ function renderAdjustTable() {
     });
     headHtml += '<th style="min-width:100px;text-align:center;vertical-align:top"><div style="font-weight:600">单价</div></th>';
     headHtml += '<th style="min-width:120px;text-align:center;vertical-align:top"><div style="font-weight:600">总价</div></th>';
+    headHtml += '<th style="min-width:70px;text-align:center;vertical-align:top"><div style="font-weight:600">操作</div></th>';
     head.innerHTML = headHtml;
  
     // 收集所有试验项目（与样车调整表格纵轴完全一致的来源，抽公共函数）
@@ -3883,15 +3942,15 @@ function renderAdjustTable() {
  
     // --- 上半部：配置矩阵系统项行（基础车型单选 + 各系统下拉）---
     tbody.insertAdjacentHTML('beforeend', buildConfigMatrixRowsHtml('_adjust'));
-    // 为矩阵行补单价、总价空列（保持列对齐）
+    // 为矩阵行补单价、总价、操作空列（保持列对齐）
     tbody.querySelectorAll('tr').forEach(r => {
-        r.insertAdjacentHTML('beforeend', '<td style="background:var(--bg-elevated)"></td><td style="background:var(--bg-elevated)"></td>');
+        r.insertAdjacentHTML('beforeend', '<td style="background:var(--bg-elevated)"></td><td style="background:var(--bg-elevated)"></td><td style="background:var(--bg-elevated)"></td>');
     });
- 
+
     // 分隔行：区分配置矩阵区与试验项目区
     const separatorRow = document.createElement('tr');
     separatorRow.style.background = 'var(--bg-elevated)';
-    separatorRow.innerHTML = `<td colspan="${selectedConfigs.length + 3}" style="padding:6px 12px;font-size:11px;color:var(--text-muted);font-weight:600;letter-spacing:1px;border-top:2px solid var(--border);border-bottom:1px solid var(--border)">试验项目（新车 / 借用）</td>`;
+    separatorRow.innerHTML = `<td colspan="${selectedConfigs.length + 4}" style="padding:6px 12px;font-size:11px;color:var(--text-muted);font-weight:600;letter-spacing:1px;border-top:2px solid var(--border);border-bottom:1px solid var(--border)">试验项目（新车 / 借用）</td>`;
     tbody.appendChild(separatorRow);
  
     // --- 下半部：试验项目行（自动计算项不在样车调整表格中显示，仅在预算导出中体现）---
@@ -3973,23 +4032,41 @@ function renderAdjustTable() {
         // --- 单价列：展示单价计算（如"1.5*5.4=8.10万/台"） ---
         // --- 总价列：所有配置新车+借用之和 × 单价，加id便于局部刷新 ---
         if (TEST_PRICES[testName]) {
-            const price = getTestPrice(testName);
-            const multiplier = getTestMultiplier(testName);
-            const unitPrice = multiplier * price;
-            if (multiplier !== 1) {
-                rowHtml += `<td id="priceCell_${testName}" style="text-align:center;font-size:11px;color:var(--text-muted);background:var(--bg-elevated);white-space:nowrap">${multiplier}*${price}万/台=<br><b style="color:var(--accent-hover)">${unitPrice.toFixed(2)}万/台</b></td>`;
-            } else {
-                rowHtml += `<td id="priceCell_${testName}" style="text-align:center;font-size:11px;color:var(--text-muted);background:var(--bg-elevated);white-space:nowrap">${price}万/台</td>`;
-            }
+            const unitPrice = getTestMultiplier(testName) * getTestPrice(testName);
+            // 单价/总价内容统一由辅助函数生成（按TEST_PRICES.unit区分单位），避免多处格式漂移
+            rowHtml += `<td id="priceCell_${testName}" style="text-align:center;font-size:11px;color:var(--text-muted);background:var(--bg-elevated);white-space:nowrap">${formatPriceCellContent(testName)}</td>`;
             const testTotalCost = testTotalQty * unitPrice;
-            rowHtml += `<td id="totalCell_${testName}" style="text-align:center;font-size:12px;font-weight:600;color:var(--accent-hover);background:var(--bg-elevated);white-space:nowrap">${testTotalQty}×${unitPrice.toFixed(2)}=<br>${testTotalCost.toFixed(2)}万元</td>`;
+            rowHtml += `<td id="totalCell_${testName}" style="text-align:center;font-size:12px;font-weight:600;color:var(--accent-hover);background:var(--bg-elevated);white-space:nowrap">${formatTotalCellContent(testTotalQty, unitPrice, testTotalCost)}</td>`;
         } else {
             rowHtml += '<td style="background:var(--bg-elevated)"></td><td style="background:var(--bg-elevated)"></td>';
         }
- 
+
+        // 操作列：删除按钮（删除后该项目的样车数量与费用从所有配置中移除，可在底部重新添加）
+        const escTestName = testName.replace(/'/g, "\\'");
+        rowHtml += `<td style="text-align:center;background:var(--bg-elevated)"><button class="btn btn-sm" style="padding:2px 10px;font-size:11px;color:#d93025;border:1px solid #f0b9b3;background:#fff" onclick="deleteTestRow('${escTestName}')">删除</button></td>`;
+
         row.innerHTML = rowHtml;
         tbody.appendChild(row);
     });
+
+    // --- 底部新增行：下拉选择已删除的试验项目进行恢复 ---
+    const deletedTests = (projectInfo.deletedTests || []).filter(n => !AUTO_CALC_ITEMS.has(n));
+    const addRow = document.createElement('tr');
+    let addRowHtml = `<td style="position:sticky;left:0;z-index:1;background:var(--surface-2);font-weight:600;color:var(--primary);white-space:nowrap">＋ 新增试验项目</td>`;
+    if (deletedTests.length > 0) {
+        const options = deletedTests.map(n => `<option value="${n}">${n}</option>`).join('');
+        addRowHtml += `<td colspan="${selectedConfigs.length + 3}" style="padding:6px 10px;background:var(--surface-2)">
+            <div style="display:flex;gap:8px;align-items:center">
+                <select id="restoreTestSelect" class="input" style="min-width:220px;font-size:12px;padding:3px 6px">${options}</select>
+                <button class="btn btn-sm" style="padding:3px 14px;font-size:12px" onclick="restoreTestRow()">添加</button>
+                <span style="font-size:11px;color:var(--text-muted)">从已删除的试验项目中选择并恢复，恢复后自动带回归属基线的样车数量与费用</span>
+            </div>
+        </td>`;
+    } else {
+        addRowHtml += `<td colspan="${selectedConfigs.length + 3}" style="padding:6px 10px;font-size:11px;color:var(--text-muted);background:var(--surface-2)">所有试验项目均在列表中（删除试验项目后可在此处重新添加）</td>`;
+    }
+    addRow.innerHTML = addRowHtml;
+    tbody.appendChild(addRow);
  
     // 表尾：每个配置的样车数量汇总和费用 + 总价合计
     if (tfoot) {
@@ -4010,6 +4087,7 @@ function renderAdjustTable() {
         });
         footHtml += `<td style="background:var(--bg-elevated)"></td>`;
         footHtml += `<td id="grandTotalCell" style="text-align:center;background:var(--bg-elevated);font-weight:700;color:var(--accent-hover);white-space:nowrap">合计：<br>${grandTotal.toFixed(2)}万元</td>`;
+        footHtml += `<td style="background:var(--bg-elevated)"></td>`;
         tfoot.innerHTML = footHtml;
     }
  
@@ -4017,7 +4095,30 @@ function renderAdjustTable() {
     // 保证与摘要 chip 的计算路径完全一致（不调整时上下费用相等）
     updateAdjustFootAndKPIs();
 }
- 
+
+// 删除试验项目行：加入 projectInfo.deletedTests，所有数量/费用计算自动排除
+// 费用联动由 getTestsForItem 单点过滤保证（摘要chip、表尾、KPI、报表、导出全链路生效）
+function deleteTestRow(testName) {
+    if (!confirm(`确定删除试验项目"${testName}"吗？\n删除后该项目的样车数量与费用将从所有配置中移除，可在表格底部重新添加。`)) return;
+    if (!projectInfo.deletedTests) projectInfo.deletedTests = [];
+    if (!projectInfo.deletedTests.includes(testName)) projectInfo.deletedTests.push(testName);
+    renderAdjustTable();
+    updateBadges();
+    showToast('success', '删除成功', `试验项目"${testName}"已从样车调整中移除`);
+}
+
+// 恢复试验项目行：从 projectInfo.deletedTests 中移除并重渲染
+// 恢复后自动带回归属基线的样车数量与费用（含此前调整过的数量）
+function restoreTestRow() {
+    const sel = document.getElementById('restoreTestSelect');
+    if (!sel || !sel.value) return;
+    const testName = sel.value;
+    projectInfo.deletedTests = (projectInfo.deletedTests || []).filter(n => n !== testName);
+    renderAdjustTable();
+    updateBadges();
+    showToast('success', '添加成功', `试验项目"${testName}"已恢复显示`);
+}
+
 // 更新样车调整页面顶部KPI卡片
 function updateAdjustKPIs() {
     let totalNew = 0;
@@ -4065,17 +4166,11 @@ function updateCustomMileage(value) {
     const price = getTestPrice(testName);
     const multiplier = getTestMultiplier(testName);  // 读取最新里程
     const unitPrice = multiplier * price;
- 
+
     // 局部刷新该行单价单元格
     const priceCell = document.getElementById(`priceCell_${testName}`);
-    if (priceCell) {
-        if (multiplier !== 1) {
-            priceCell.innerHTML = `${multiplier}*${price}万/台=<br><b style="color:var(--accent-hover)">${unitPrice.toFixed(2)}万/台</b>`;
-        } else {
-            priceCell.innerHTML = `${price}万/台`;
-        }
-    }
- 
+    if (priceCell) priceCell.innerHTML = formatPriceCellContent(testName);
+
     // 局部刷新该行总价单元格
     const totalCell = document.getElementById(`totalCell_${testName}`);
     if (totalCell) {
@@ -4088,7 +4183,7 @@ function updateCustomMileage(value) {
             testTotalQty += finalNew + finalBorrow;
         });
         const testTotalCost = testTotalQty * unitPrice;
-        totalCell.innerHTML = `${testTotalQty}×${unitPrice.toFixed(2)}=<br>${testTotalCost.toFixed(2)}万元`;
+        totalCell.innerHTML = formatTotalCellContent(testTotalQty, unitPrice, testTotalCost);
     }
  
     // 刷新表尾合计与顶部KPI（内部会重新遍历所有项目，包含自定义里程）
@@ -4135,6 +4230,7 @@ function updateAdjustFootAndKPIs() {
         });
         footHtml += `<td style="background:var(--bg-elevated)"></td>`;
         footHtml += `<td id="grandTotalCell" style="text-align:center;background:var(--bg-elevated);font-weight:700;color:var(--accent-hover);white-space:nowrap">合计：<br>${grandTotal.toFixed(2)}万元</td>`;
+        footHtml += `<td style="background:var(--bg-elevated)"></td>`;
         tfoot.innerHTML = footHtml;
     }
  
@@ -4154,11 +4250,9 @@ function updateAdjustFootAndKPIs() {
             testTotalQty += finalNew + finalBorrow;
         });
         if (TEST_PRICES[testName]) {
-            const price = getTestPrice(testName);
-            const multiplier = getTestMultiplier(testName);
-            const unitPrice = multiplier * price;
+            const unitPrice = getTestMultiplier(testName) * getTestPrice(testName);
             const testTotalCost = testTotalQty * unitPrice;
-            cell.innerHTML = `${testTotalQty}×${unitPrice.toFixed(2)}=<br>${testTotalCost.toFixed(2)}万元`;
+            cell.innerHTML = formatTotalCellContent(testTotalQty, unitPrice, testTotalCost);
         }
     });
  
@@ -4480,6 +4574,10 @@ function importProjectConfig(data) {
         projectInfo.customMileage = (typeof data.projectInfo.customMileage === 'number')
             ? data.projectInfo.customMileage
             : 0;
+        // 已删除试验项目列表持久化加载（旧版本无此字段时默认为空数组）
+        projectInfo.deletedTests = Array.isArray(data.projectInfo.deletedTests)
+            ? data.projectInfo.deletedTests
+            : [];
  
         document.getElementById('settingsProjectCode').value = projectInfo.code;
         document.getElementById('settingsSop').value = projectInfo.sop;
@@ -4972,18 +5070,24 @@ function exportSampleCarConfigTable() {
         // --- 单价列：清楚展示单价计算（如"1.5*5.4万元/台=8.1万元/台"） ---
         // --- 总价列：所有配置新车+借用之和 × 单价 ---
         if (TEST_PRICES[testName]) {
+            const info = TEST_PRICES[testName];
             const price = getTestPrice(testName);
             const multiplier = getTestMultiplier(testName);
             const unitPrice = multiplier * price;
-            // 单价格式：multiplier≠1 时展示计算过程，=1 时直接显示单价
-            if (multiplier !== 1) {
-                testRow.push(`${multiplier}*${price}万元/台=${unitPrice.toFixed(2)}万元/台`);
+            // 万公里类：multiplier万公里 × price元/公里 = unitPrice万元/台
+            // 万/台类：price万元/台
+            if (info.unit === '万公里') {
+                if (multiplier !== 0) {
+                    testRow.push(`${multiplier}万公里×${price}元/公里=${unitPrice.toFixed(2)}万元/台`);
+                } else {
+                    testRow.push(`${price}元/公里`);
+                }
             } else {
                 testRow.push(`${price}万元/台`);
             }
             // 总价格式：总台数 × 单台单价 = 总费用
             const totalCost = testTotalQty * unitPrice;
-            testRow.push(`${testTotalQty}×${unitPrice.toFixed(2)}万元/台=${totalCost.toFixed(2)}万元`);
+            testRow.push(`${testTotalQty}台×${unitPrice.toFixed(2)}万元/台=${totalCost.toFixed(2)}万元`);
         } else {
             testRow.push('', '');
         }
